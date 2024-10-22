@@ -7,32 +7,36 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.map.journalapp.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {
 
-    private lateinit var binding: FragmentHomeBinding
     private lateinit var journalAdapter: JournalAdapter
-
-    // Sample data for the RecyclerView
-    private val sampleJournals = listOf(
-        JournalEntry("Ini Journal 1", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "01.01.2024"),
-        JournalEntry("Ini Journal 2", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "02.01.2024"),
-        JournalEntry("Ini Journal 3", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "03.01.2024")
-    )
+    private val journalEntries = mutableListOf<JournalEntry>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment using ViewBinding
-        binding = FragmentHomeBinding.inflate(inflater, container, false)
+        // Inflate the layout for this fragment
+        val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        // Set up RecyclerView
-        binding.journalRecycle.layoutManager = LinearLayoutManager(requireContext())
-        journalAdapter = JournalAdapter(sampleJournals)
-        binding.journalRecycle.adapter = journalAdapter
+        // Initialize the RecyclerView
+        val recyclerView: RecyclerView = view.findViewById(R.id.journalRecycle)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        return binding.root
+        // Sample data for the RecyclerView
+        journalEntries.addAll(listOf(
+            JournalEntry("Ini Journal 1", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "01.01.2024"),
+            JournalEntry("Ini Journal 2", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "02.01.2024"),
+            JournalEntry("Ini Journal 3", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "03.01.2024"),
+            JournalEntry("Ini Journal 4", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "04.01.2024"),
+            JournalEntry("Ini Journal 5", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", "05.01.2024")
+        ))
+
+        // Set the adapter with the initial data
+        journalAdapter = JournalAdapter(journalEntries)
+        recyclerView.adapter = journalAdapter
+
+        return view
     }
 }
