@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".HomeFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Add New Journal Button -->
+        <LinearLayout
+            android:id="@+id/newJournalButton"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/background_new_journal"
+            android:layout_margin="16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_add"
+                android:contentDescription="New Journal" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="New Journal"
+                android:textSize="16sp"
+                android:paddingTop="8dp"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+
+        <!-- Journal Card -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/journalRecycle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/newJournalButton"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="false"/> <!-- Prevent nested scrolling -->
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

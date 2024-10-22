@@ -1,20 +1,53 @@
 package com.map.journalapp
 
+import android.content.res.Configuration
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        // Status Bar fit user theme
+        setStatusBarColor()
+
+        // Load the HomeFragment when the activity starts
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HomeFragment())
+                .commit()
         }
+    }
+
+    private fun setStatusBarColor() {
+        // Get the color for the status bar
+        val color = TypedValue().also { theme.resolveAttribute(R.color.white, it, true) }.data
+        window.statusBarColor = color
+
+        // Use WindowInsetsControllerCompat for setting icon colors
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+
+        // Check the current theme mode and set the appropriate icon colors
+        if (isDarkTheme()) {
+            // Dark theme, use light icons
+            controller.isAppearanceLightStatusBars = false
+        } else {
+            // Light theme, use dark icons
+            controller.isAppearanceLightStatusBars = true
+        }
+    }
+
+    // Helper function to determine if the app is in dark mode
+    private fun isDarkTheme(): Boolean {
+        return (resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 }
