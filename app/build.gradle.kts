@@ -1,11 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.map.journalapp"
     compileSdk = 34
+
+    buildFeatures {
+        viewBinding = true
+    }
 
     defaultConfig {
         applicationId = "com.map.journalapp"
@@ -50,4 +55,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(platform("com.google.firebase:firebase-bom:33.5.0"))
+    implementation("com.google.firebase:firebase-analytics")
 }
