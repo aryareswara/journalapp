@@ -16,3 +16,4 @@ local.properties
 /.idea/appInsightsSettings.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/discord.xml
+/app/google-services.json
