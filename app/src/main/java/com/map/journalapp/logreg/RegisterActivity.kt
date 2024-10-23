@@ -1,4 +1,4 @@
-package com.map.journalapp
+package com.map.journalapp.logreg
 
 import android.content.Intent
 import android.os.Bundle

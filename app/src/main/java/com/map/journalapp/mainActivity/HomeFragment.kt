@@ -1,12 +1,17 @@
-package com.map.journalapp
+package com.map.journalapp.mainActivity
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.map.journalapp.R
+import com.map.journalapp.adapter_model.JournalAdapter
+import com.map.journalapp.adapter_model.JournalEntry
+import com.map.journalapp.write.FillJournalFragment
 
 class HomeFragment : Fragment() {
 
@@ -36,6 +41,16 @@ class HomeFragment : Fragment() {
         // Set the adapter with the initial data
         journalAdapter = JournalAdapter(journalEntries)
         recyclerView.adapter = journalAdapter
+
+        // New Journal Button click listener to navigate to FillJournalFragment
+        val newJournalButton: LinearLayout = view.findViewById(R.id.newJournalButton)
+        newJournalButton.setOnClickListener {
+            // Use FragmentTransaction to replace the current fragment with FillJournalFragment
+            val transaction = requireActivity().supportFragmentManager.beginTransaction()
+            transaction.replace(R.id.fragment_container, FillJournalFragment()) // fragment_container is the ID of your FrameLayout where fragments are displayed
+            transaction.addToBackStack(null)  // Add the transaction to the back stack so the user can navigate back
+            transaction.commit()
+        }
 
         return view
     }
