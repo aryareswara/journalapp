@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Title Input -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Write your title"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/journal_title_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Your title here..."
+            android:background="@drawable/rounded_edittext"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Tag Input and Add Button -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Tags"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+
+            <EditText
+                android:id="@+id/tag_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Enter a tag"
+                android:background="@drawable/rounded_edittext"
+                android:padding="12dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/add_tag_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Tag"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <!-- Display added tags -->
+        <LinearLayout
+            android:id="@+id/tag_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp" />
+
+        <!-- Location Allow/Not Allow -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Journal Written Location"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="16dp" />
+
+        <RadioGroup
+            android:id="@+id/location_option_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/location_allow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Allow" />
+
+            <RadioButton
+                android:id="@+id/location_not_allow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Allow" />
+        </RadioGroup>
+
+        <!-- Add Image Button -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your Journal Cover"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Placeholder for selected image -->
+        <ImageView
+            android:id="@+id/journal_cover_image"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/darker_gray"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="16dp" />
+        <!-- Button to select an image -->
+        <Button
+            android:id="@+id/select_image_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Image"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Button to proceed -->
+        <Button
+            android:id="@+id/btn_to_story"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="To the story"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+</ScrollView>
