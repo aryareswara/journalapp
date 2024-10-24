@@ -5,7 +5,8 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    tools:openDrawer="start">
 
     <!-- Main content -->
     <FrameLayout
@@ -22,11 +23,12 @@
             app:titleTextColor="@android:color/black"
             app:navigationIcon="@drawable/ic_menu" />
 
+        <!-- Fragment -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?attr/actionBarSize" /> <!-- This margin ensures it starts below the toolbar -->
+            android:layout_marginTop="?attr/actionBarSize" />
     </FrameLayout>
 
     <!-- Navigation Drawer -->

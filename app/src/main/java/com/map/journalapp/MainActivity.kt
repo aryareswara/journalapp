@@ -12,11 +12,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.HomeFragment
 import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var drawerLayout: DrawerLayout // Declare drawerLayout
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +32,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         drawerLayout = findViewById(R.id.drawer_layout) // Initialize drawerLayout
+        navigationView = findViewById(R.id.nav_view) // Initialize navigationView
 
         // Enable the hamburger icon
         toolbar.setNavigationIcon(R.drawable.ic_menu) // Replace with your icon resource
@@ -38,6 +41,32 @@ class MainActivity : AppCompatActivity() {
                 drawerLayout.closeDrawer(GravityCompat.START)
             } else {
                 drawerLayout.openDrawer(GravityCompat.START)
+            }
+        }
+
+        // Set a listener for the navigation view
+        navigationView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.home -> {
+                    // Navigate to HomeFragment
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, HomeFragment())
+                        .addToBackStack(null) // Add to back stack
+                        .commit()
+                    drawerLayout.closeDrawer(GravityCompat.START) // Close the drawer
+                    true
+                }
+                R.id.setting -> {
+                    // Navigate to SettingFragment
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, SettingFragment())
+                        .addToBackStack(null) // Add to back stack
+                        .commit()
+                    drawerLayout.closeDrawer(GravityCompat.START) // Close the drawer
+                    true
+                }
+                // Handle other menu items here if necessary
+                else -> false
             }
         }
 
