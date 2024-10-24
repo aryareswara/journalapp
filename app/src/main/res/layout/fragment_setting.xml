@@ -1,14 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SettingFragment">
+    android:orientation="vertical"
+    android:padding="16dp">
 
-    <!-- TODO: Update blank fragment layout -->
+    <!-- User Profile Picture -->
+    <ImageView
+        android:id="@+id/img_profile_picture"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop" />
+
+    <Button
+        android:id="@+id/btn_upload_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Upload Photo"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp" />
+
+    <!-- Editable Name -->
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:id="@+id/setting_name_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name"
+        android:textSize="16sp"
+        android:layout_marginTop="16dp" />
 
-</FrameLayout>
+    <EditText
+        android:id="@+id/setting_name_edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter your name"
+        android:visibility="gone" /> <!-- Sembunyikan EditText di awal -->
+
+    <Button
+        android:id="@+id/btn_edit_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>
