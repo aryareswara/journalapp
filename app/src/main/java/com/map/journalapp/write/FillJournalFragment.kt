@@ -1,8 +1,5 @@
 package com.map.journalapp.write
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,9 +19,6 @@ class FillJournalFragment : Fragment() {
     private var _binding: FragmentFillJournalBinding? = null
     private val binding get() = _binding!!
 
-    private val REQUEST_IMAGE_SELECT = 1001
-    private var coverImageUri: Uri? = null
-
     private val storage = FirebaseStorage.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private val selectedTagIds = mutableListOf<String>()
@@ -40,58 +34,50 @@ class FillJournalFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Load available tags from Firestore
-        loadTags()
+        // Load tags from Firestore when the fragment is loaded
+        loadTagsFromFirestore()
 
-        // Select image for cover
-        binding.selectImageButton.setOnClickListener {
-            openImageSelector()
-        }
-
-        // Add tag button click listener to add tag from EditText to ChipGroup and Firestore
-        binding.addTagButton.setOnClickListener {
-            val newTag = binding.tagInput.text.toString().trim() // Get text from input field
-            if (newTag.isNotEmpty()) {
-                saveTagToFirestore(newTag) // Save the tag to Firestore
-                binding.tagInput.text.clear() // Clear the input field after adding
-            } else {
-                Toast.makeText(requireContext(), "Please enter a tag", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Save journal to Firestore and redirect to NewNoteFragment
+        // Button to save journal and redirect to NewNoteFragment
         binding.btnToStory.setOnClickListener {
             saveJournalToFirestoreAndRedirect()
         }
-    }
 
-    private fun openImageSelector() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        startActivityForResult(intent, REQUEST_IMAGE_SELECT)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_IMAGE_SELECT && resultCode == Activity.RESULT_OK) {
-            coverImageUri = data?.data
-            binding.journalCoverImage.setImageURI(coverImageUri)
+        // Add a new tag when the Add Tag button is clicked
+        binding.addTagButton.setOnClickListener {
+            val newTag = binding.tagInput.text.toString().trim()
+            if (newTag.isNotEmpty()) {
+                saveTagToFirestore(newTag)
+                binding.tagInput.text.clear()
+            } else {
+                Toast.makeText(requireContext(), "Enter a valid tag", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    // Load available tags from Firestore and display them in the ChipGroup
-    private fun loadTags() {
-        // Clear the current ChipGroup to avoid duplicate tags
-        binding.tagChipGroup.removeAllViews()
-
-        // Fetch tags from Firestore
+    // Load tags from Firestore and display them in ChipGroup
+    private fun loadTagsFromFirestore() {
         firestore.collection("tags").get()
             .addOnSuccessListener { result ->
                 for (document in result) {
-                    val tagName = document.getString("tagName") ?: ""
+                    val tagId = document.id
+                    val tagName = document.getString("tagName") ?: continue
 
-                    // Add tags from Firestore to ChipGroup
-                    addTagToChipGroup(tagName, document.id)
+                    // Dynamically add chips for each tag from the database
+                    val chip = Chip(requireContext())
+                    chip.text = tagName
+                    chip.isCheckable = true
+
+                    // Add or remove tag ID from selectedTagIds when the chip is checked/unchecked
+                    chip.setOnCheckedChangeListener { _, isChecked ->
+                        if (isChecked) {
+                            selectedTagIds.add(tagId)  // Add the tag ID
+                        } else {
+                            selectedTagIds.remove(tagId)  // Remove the tag ID
+                        }
+                    }
+
+                    // Add chip to the ChipGroup
+                    binding.tagChipGroup.addView(chip)
                 }
             }
             .addOnFailureListener {
@@ -99,80 +85,84 @@ class FillJournalFragment : Fragment() {
             }
     }
 
-    // Function to add a tag to Firestore
-    private fun saveTagToFirestore(tagName: String) {
-        // Create a new tag object
-        val tagData = hashMapOf(
-            "tagName" to tagName
-        )
-
-        // Save the tag to Firestore
+    // Save a new tag to the tags collection in Firestore
+    private fun saveTagToFirestore(newTag: String) {
+        val tagData = hashMapOf("tagName" to newTag)
         firestore.collection("tags")
             .add(tagData)
-            .addOnSuccessListener {
-                // Reload the tags to display the newly added tag
-                loadTags()
-                Toast.makeText(requireContext(), "Tag added successfully", Toast.LENGTH_SHORT).show()
+            .addOnSuccessListener { documentReference ->
+                val tagId = documentReference.id
+                selectedTagIds.add(tagId)  // Add the tag ID to selectedTagIds
+                Toast.makeText(requireContext(), "Tag added: $newTag", Toast.LENGTH_SHORT).show()
+
+                // Dynamically create a chip for the new tag
+                val chip = Chip(requireContext())
+                chip.text = newTag
+                chip.isCheckable = true
+                chip.isChecked = true
+
+                // Add or remove tag ID when the chip is checked/unchecked
+                chip.setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        selectedTagIds.add(tagId)
+                    } else {
+                        selectedTagIds.remove(tagId)
+                    }
+                }
+
+                // Add the new chip to the ChipGroup
+                binding.tagChipGroup.addView(chip)
             }
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to add tag", Toast.LENGTH_SHORT).show()
             }
     }
 
-    // Function to add a tag to the ChipGroup dynamically
-    private fun addTagToChipGroup(tagName: String, tagId: String? = null) {
-        val chip = Chip(requireContext())
-        chip.text = tagName
-        chip.isCheckable = true
-        chip.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                // Add tag to selectedTagIds when checked
-                selectedTagIds.add(tagId ?: UUID.randomUUID().toString())
-            } else {
-                // Remove tag from selectedTagIds when unchecked
-                selectedTagIds.remove(tagId ?: UUID.randomUUID().toString())
-            }
-        }
 
-        // Add the chip to the ChipGroup
-        binding.tagChipGroup.addView(chip)
-    }
-
+    // Function to save the journal and its tags to Firestore
+    // Function to save the journal and its tags to Firestore
     private fun saveJournalToFirestoreAndRedirect() {
         val title = binding.journalTitleInput.text.toString().trim()
 
-        if (title.isNotEmpty() && selectedTagIds.isNotEmpty()) {
-            // Prepare journal data
-            val journalData = hashMapOf(
-                "title" to title,
-                "tags" to selectedTagIds,  // Save selected tags with the journal
-                "created_at" to System.currentTimeMillis()
-            )
-
-            // Save journal to Firestore
-            firestore.collection("journals")
-                .add(journalData)
-                .addOnSuccessListener { documentReference ->
-                    // Once journal is saved, navigate to NewNoteFragment and pass title, journalId, and tags
-                    val newNoteFragment = NewNoteFragment()
-                    val bundle = Bundle()
-                    bundle.putString("journalId", documentReference.id)
-                    bundle.putString("journalTitle", title)
-                    bundle.putStringArrayList("journalTags", ArrayList(selectedTagIds))  // Pass the tags
-                    newNoteFragment.arguments = bundle
-
-                    // Perform fragment transaction
-                    val transaction = requireActivity().supportFragmentManager.beginTransaction()
-                    transaction.replace(R.id.fragment_container, newNoteFragment)
-                    transaction.addToBackStack(null)
-                    transaction.commit()
-                }
-                .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Failed to save journal", Toast.LENGTH_SHORT).show()
-                }
-        } else {
-            Toast.makeText(requireContext(), "Please enter a title and select tags", Toast.LENGTH_SHORT).show()
+        if (title.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a title", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        // Get the current timestamp when creating the journal
+        val journalData = hashMapOf(
+            "title" to title,
+            "created_at" to System.currentTimeMillis(),  // Save current timestamp
+            "tags" to selectedTagIds  // Save selected tag IDs
+        )
+
+        // Save journal to Firestore
+        firestore.collection("journals")
+            .add(journalData)
+            .addOnSuccessListener { documentReference ->
+                val journalId = documentReference.id
+                navigateToNewNoteFragment(journalId, title)
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to save journal", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+    // Navigate to NewNoteFragment after saving the journal
+    private fun navigateToNewNoteFragment(journalId: String, title: String) {
+        val newNoteFragment = NewNoteFragment().apply {
+            arguments = Bundle().apply {
+                putString("journalId", journalId)
+                putString("journalTitle", title)
+                putStringArrayList("journalTags", ArrayList(selectedTagIds))  // Pass the selected tag IDs
+            }
+        }
+
+        val transaction = requireActivity().supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.fragment_container, newNoteFragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
     }
 
 

@@ -46,16 +46,18 @@ class NewNoteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Get the journal ID, title, and tags from arguments
+        // Get the journal ID, title, and content from arguments
         journalId = arguments?.getString("journalId")
         journalTitle = arguments?.getString("journalTitle")
-        journalTags = arguments?.getStringArrayList("journalTags")
+        val noteContent = arguments?.getString("noteContent")  // Retrieve the note content
 
         // Set the journal title in the TextView
         binding.journalTitleDisplay.text = journalTitle
 
-        // Display the tags in a mini box under the title
-        displayTags()
+        // Display the note content in the EditText
+        if (!noteContent.isNullOrEmpty()) {
+            binding.journalContentInput.setText(noteContent)  // Set the note content
+        }
 
         // Add image to the note content
         binding.btnAddImage.setOnClickListener {
@@ -90,6 +92,7 @@ class NewNoteFragment : Fragment() {
             }
         }
     }
+
 
     private fun selectImageForNote() {
         val intent = Intent(Intent.ACTION_PICK)
@@ -142,6 +145,22 @@ class NewNoteFragment : Fragment() {
                 Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    fun saveNoteToJournal(journalId: String, noteContent: String) {
+        val noteData = hashMapOf(
+            "content" to noteContent,
+            "created_at" to System.currentTimeMillis()
+        )
+        firestore.collection("journals").document(journalId)
+            .collection("notes")
+            .add(noteData)
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Note added successfully", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to add note", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun saveNoteToFirestore() {
