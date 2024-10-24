@@ -24,6 +24,9 @@ class NewNoteFragment : Fragment() {
     private val storage = FirebaseStorage.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    // Journal ID passed from FillJournalFragment
+    private var journalId: String? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -34,6 +37,9 @@ class NewNoteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Get the journal ID from arguments
+        journalId = arguments?.getString("journalId")
 
         // Add image to the note content
         binding.btnAddImage.setOnClickListener {
@@ -79,19 +85,18 @@ class NewNoteFragment : Fragment() {
     }
 
     private fun saveNoteToFirestore() {
-        val title = binding.journalTitleDisplay.text.toString()
         val content = binding.journalContentInput.text.toString()
 
-        if (content.isNotEmpty()) {
-            // Prepare data to save
+        if (content.isNotEmpty() && journalId != null) {
+            // Prepare note data
             val noteData = hashMapOf(
-                "title" to title,
                 "content" to content,
                 "created_at" to System.currentTimeMillis()
             )
 
-            // Save the note to Firestore
-            firestore.collection("notes")
+            // Save the note to the notes subcollection under the specific journal
+            firestore.collection("journals").document(journalId!!)
+                .collection("notes")
                 .add(noteData)
                 .addOnSuccessListener {
                     Toast.makeText(requireContext(), "Note saved!", Toast.LENGTH_SHORT).show()
@@ -109,3 +114,4 @@ class NewNoteFragment : Fragment() {
         _binding = null
     }
 }
+

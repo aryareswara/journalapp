@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -46,7 +47,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Enter a tag"
+                android:hint="Enter tag"
                 android:background="@drawable/rounded_edittext"
                 android:padding="12dp"
                 android:layout_marginEnd="8dp" />
@@ -55,18 +56,18 @@
                 android:id="@+id/add_tag_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add Tag"
-                android:backgroundTint="@color/purple_500"
-                android:textColor="@android:color/white" />
+                android:text="Add Tag" />
         </LinearLayout>
 
-        <!-- Display added tags -->
-        <LinearLayout
-            android:id="@+id/tag_container"
+        <!-- ChipGroup to display and select tags -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/tagChipGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            app:chipSpacing="8dp"
+            app:singleSelection="false"/>
 
         <!-- Location Allow/Not Allow -->
         <TextView
@@ -114,6 +115,7 @@
             android:background="@android:color/darker_gray"
             android:scaleType="centerCrop"
             android:layout_marginBottom="16dp" />
+
         <!-- Button to select an image -->
         <Button
             android:id="@+id/select_image_button"
