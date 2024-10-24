@@ -4,15 +4,23 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.google.firebase.auth.FirebaseAuth
-import com.map.journalapp.logreg.LoginActivity
-import com.map.journalapp.mainActivity.HomeFragment
 import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.map.journalapp.logreg.LoginActivity
+import com.map.journalapp.mainActivity.FilterFragment
+import com.map.journalapp.mainActivity.HomeFragment
 import com.map.journalapp.mainActivity.SettingFragment
 
 class MainActivity : AppCompatActivity() {
@@ -20,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
+    private lateinit var chipGroupTags: ChipGroup
+    private val firestore: FirebaseFirestore = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,11 +42,15 @@ class MainActivity : AppCompatActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        drawerLayout = findViewById(R.id.drawer_layout) // Initialize drawerLayout
-        navigationView = findViewById(R.id.nav_view) // Initialize navigationView
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navigationView = findViewById(R.id.nav_view)
+
+        // Find ChipGroup in the header
+        val headerView: View = navigationView.getHeaderView(0)
+        chipGroupTags = headerView.findViewById(R.id.chipGroupTags)
 
         // Enable the hamburger icon
-        toolbar.setNavigationIcon(R.drawable.ic_menu) // Replace with your icon resource
+        toolbar.setNavigationIcon(R.drawable.ic_menu)
         toolbar.setNavigationOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 drawerLayout.closeDrawer(GravityCompat.START)
@@ -45,6 +59,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Load tags dynamically into the ChipGroup
+        loadTagsIntoChipGroup()
+
         // Set a listener for the navigation view
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
@@ -52,21 +69,20 @@ class MainActivity : AppCompatActivity() {
                     // Navigate to HomeFragment
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, HomeFragment())
-                        .addToBackStack(null) // Add to back stack
+                        .addToBackStack(null)
                         .commit()
-                    drawerLayout.closeDrawer(GravityCompat.START) // Close the drawer
+                    drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
                 R.id.setting -> {
                     // Navigate to SettingFragment
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, SettingFragment())
-                        .addToBackStack(null) // Add to back stack
+                        .addToBackStack(null)
                         .commit()
-                    drawerLayout.closeDrawer(GravityCompat.START) // Close the drawer
+                    drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
-                // Handle other menu items here if necessary
                 else -> false
             }
         }
@@ -85,21 +101,74 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadTagsIntoChipGroup() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userId = currentUser?.uid
+
+        if (userId != null) {
+            firestore.collection("tags")
+                .whereEqualTo("userId", userId)  // Query only tags associated with the current user
+                .get()
+                .addOnSuccessListener { result ->
+                    chipGroupTags.removeAllViews()  // Clear any previous chips
+
+                    for (document in result) {
+                        val tagId = document.id  // Get the tag ID
+                        val tagName = document.getString("tagName") ?: continue  // Get tag name
+
+                        // Create a new chip
+                        val chip = Chip(this)
+                        chip.text = tagName
+                        chip.isClickable = true
+                        chip.isCheckable = true
+
+                        // Add the chip to the ChipGroup
+                        chipGroupTags.addView(chip)
+
+                        // Set click listener for each chip to filter journals by tag ID
+                        chip.setOnCheckedChangeListener { _, isChecked ->
+                            if (isChecked) {
+                                // Pass the tag ID to the filter fragment when the chip is checked
+                                onTagSelected(tagId)  // Use tagId here
+                            }
+                        }
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Toast.makeText(this, "Failed to load tags: ${exception.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Toast.makeText(this, "User not authenticated", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun onTagSelected(tagId: String) {
+        // Navigate to FilterFragment with the selected tag ID
+        val bundle = Bundle().apply {
+            putString("selectedTagId", tagId)
+        }
+        val filterFragment = FilterFragment()
+        filterFragment.arguments = bundle
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, filterFragment)
+            .addToBackStack(null)
+            .commit()
+
+        // Close drawer after selection
+        drawerLayout.closeDrawer(GravityCompat.START)
+    }
+
+
     private fun setStatusBarColor() {
-        // Get the color for the status bar
         val color = TypedValue().also { theme.resolveAttribute(R.color.white, it, true) }.data
         window.statusBarColor = color
-
-        // Use WindowInsetsControllerCompat for setting icon colors
         val controller = WindowInsetsControllerCompat(window, window.decorView)
-
-        // Check the current theme mode and set the appropriate icon colors
         controller.isAppearanceLightStatusBars = !isDarkTheme()
     }
 
-    // Helper function to determine if the app is in dark mode
     private fun isDarkTheme(): Boolean {
-        return (resources.configuration.uiMode and
-                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 }

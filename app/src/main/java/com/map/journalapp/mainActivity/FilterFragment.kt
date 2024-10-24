@@ -1,60 +1,193 @@
 package com.map.journalapp.mainActivity
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.FirebaseFirestore
+import com.map.journalapp.mainActivity.HomeFragment
 import com.map.journalapp.R
+import com.map.journalapp.adapter_model.JournalAdapter
+import com.map.journalapp.adapter_model.JournalEntry
+import com.map.journalapp.write.NewNoteFragment
+import java.text.SimpleDateFormat
+import java.util.*
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [FilterFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class FilterFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var journalAdapter: JournalAdapter
+    private val journalEntries = mutableListOf<JournalEntry>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_filter, container, false)
+        val view = inflater.inflate(R.layout.fragment_filter, container, false)
+
+        firestore = FirebaseFirestore.getInstance()
+
+        val recyclerView: RecyclerView = view.findViewById(R.id.filteredJournalRecycle)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        // Pass the onJournalClick function to the adapter
+        journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
+            // Call openNoteFragment when a journal is clicked
+            openNoteFragment(journalEntry)
+        }
+        recyclerView.adapter = journalAdapter
+
+        // Get the selected tag ID from arguments
+        val selectedTagId = arguments?.getString("selectedTagId")
+        Log.d("FilterFragment", "Selected Tag ID: $selectedTagId")  // Log to verify the selected tag ID
+
+        // Load journals based on the selected tag ID
+        if (selectedTagId != null) {
+            loadJournalsByTagId(selectedTagId)
+        } else {
+            Toast.makeText(requireContext(), "No tag selected", Toast.LENGTH_SHORT).show()
+        }
+
+        return view
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment FilterFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            FilterFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun loadJournalsByTagId(tagId: String) {
+        val user = FirebaseAuth.getInstance().currentUser
+        val userId = user?.uid ?: return  // Ensure the user is authenticated
+
+        Log.d("FilterFragment", "Current User ID: $userId, Loading journals for tag ID: $tagId")
+
+        // Fetch the tag name based on the tagId
+        firestore.collection("tags").document(tagId).get()
+            .addOnSuccessListener { documentSnapshot ->
+                val tagName = documentSnapshot.getString("tagName")
+
+                if (tagName != null) {
+                    // Query journals where the tag ID is included in the 'tags' array in journals
+                    firestore.collection("journals")
+                        .whereEqualTo("userId", userId)  // Only retrieve journals for the authenticated user
+                        .whereArrayContains("tags", tagId)  // Match the tag ID
+                        .get()
+                        .addOnSuccessListener { result ->
+                            journalEntries.clear()  // Clear current entries
+
+                            if (result.isEmpty) {
+                                Log.d("FilterFragment", "No journals found for tag: $tagName")
+                                Toast.makeText(requireContext(), "No journals found for tag: $tagName", Toast.LENGTH_SHORT).show()
+                                return@addOnSuccessListener  // Early return to avoid further processing
+                            }
+
+                            for (document in result) {
+                                val journalId = document.id
+                                val title = document.getString("title") ?: "No Title"
+                                val imageUrl = document.getString("image_url")
+                                val tagIds = document.get("tags") as? List<String> ?: listOf()
+
+                                // Fetch the first note for the journal
+                                firestore.collection("journals")
+                                    .document(journalId)
+                                    .collection("notes")
+                                    .limit(1)
+                                    .get()
+                                    .addOnSuccessListener { noteResult ->
+                                        var description = "No Notes Available"
+                                        if (noteResult.documents.isNotEmpty()) {
+                                            val note = noteResult.documents[0].getString("content") ?: ""
+                                            description = getFirst50Words(note)
+                                        }
+
+                                        val timestamp = document.getLong("created_at") ?: 0L
+                                        val formattedDate = formatTimestamp(timestamp)
+
+                                        // Fetch tag names based on the tag IDs in the journal
+                                        fetchTags(tagIds) { tags ->
+                                            val journalEntry = JournalEntry(
+                                                id = journalId,
+                                                title = title,
+                                                description = description,
+                                                createdAt = formattedDate,
+                                                tags = tags,  // Translated tag names
+                                                imageUrl = imageUrl
+                                            )
+                                            journalEntries.add(journalEntry)
+
+                                            Log.d("FilterFragment", "Added journal entry: $title")
+                                            journalAdapter.notifyDataSetChanged()
+                                        }
+                                    }
+                            }
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("FilterFragment", "Error loading journals: ${exception.message}")
+                            Toast.makeText(requireContext(), "Failed to load journals: ${exception.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Log.e("FilterFragment", "Tag not found for ID: $tagId")
+                    Toast.makeText(requireContext(), "Tag not found", Toast.LENGTH_SHORT).show()
                 }
             }
+            .addOnFailureListener { exception ->
+                Log.e("FilterFragment", "Error loading tag name: ${exception.message}")
+                Toast.makeText(requireContext(), "Failed to load tag name: ${exception.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun openNoteFragment(journalEntry: JournalEntry) {
+        val newNoteFragment = NewNoteFragment().apply {
+            arguments = Bundle().apply {
+                putString("journalId", journalEntry.id)
+                putString("journalTitle", journalEntry.title)
+                putString("noteContent", journalEntry.description)  // Pass the note content
+            }
+        }
+
+        val transaction = requireActivity().supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.fragment_container, newNoteFragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
+    }
+
+    private fun getFirst50Words(content: String): String {
+        val words = content.split("\\s+".toRegex()).take(50)
+        return words.joinToString(" ") + if (words.size == 50) "..." else ""
+    }
+
+    // Fetch tag names from Firestore based on tag IDs
+    private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
+        val tags = mutableListOf<String>()
+
+        if (tagIds.isEmpty()) {
+            callback(tags)
+            return
+        }
+
+        // Fetch the tag names by their document references
+        firestore.collection("tags")
+            .whereIn(FieldPath.documentId(), tagIds)
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val tagName = document.getString("tagName") ?: "Unknown"
+                    tags.add(tagName)
+                }
+                callback(tags)
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
+                callback(tags) // Return empty tags in case of failure
+            }
+    }
+
+    private fun formatTimestamp(timestamp: Long): String {
+        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+        val date = Date(timestamp)
+        return sdf.format(date)
     }
 }
