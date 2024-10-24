@@ -35,21 +35,20 @@ class JournalAdapter(
         val journalEntry = journalEntries[position]
 
         holder.journalTitle.text = journalEntry.title
-        holder.journalDescription.text = journalEntry.description
+        // Pastikan menggunakan shortDescription untuk ditampilkan di kartu
+        holder.journalDescription.text = journalEntry.shortDescription
         holder.journalDate.text = journalEntry.createdAt
 
         // Check if the journal entry has an image
         if (journalEntry.imageUrl.isNullOrEmpty()) {
-            holder.journalImage.visibility = View.GONE  // Hide ImageView if no image URL is available
+            holder.journalImage.visibility = View.GONE
         } else {
             holder.journalImage.visibility = View.VISIBLE
-            // Load the image from the URL (if you're using an image loading library like Glide or Picasso)
-            Glide.with(holder.itemView.context)  // Use holder.itemView.context instead of context
-                .load(journalEntry.imageUrl)  // Load the image URL
-                .into(holder.journalImage)  // Into the ImageView
+            Glide.with(holder.itemView.context)
+                .load(journalEntry.imageUrl)
+                .into(holder.journalImage)
         }
 
-        // Handle tag chips
         holder.tagChipGroup.removeAllViews() // clear previous chips
         for (tag in journalEntry.tags) {
             val chip = Chip(holder.itemView.context)
@@ -62,10 +61,10 @@ class JournalAdapter(
         }
     }
 
-
     override fun getItemCount(): Int {
         return journalEntries.size
     }
 }
+
 
 

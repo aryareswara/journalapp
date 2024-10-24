@@ -59,7 +59,7 @@ class HomeFragment : Fragment() {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.description)  // Pass the note content
+                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
             }
         }
 
@@ -73,27 +73,18 @@ class HomeFragment : Fragment() {
         val user = FirebaseAuth.getInstance().currentUser
         val userId = user?.uid ?: return  // Ensure the user is authenticated
 
-        // Log the current user ID for verification
-        println("Current User ID: $userId")
-
         firestore.collection("journals")
-            .whereEqualTo("userId", userId)  // Only retrieve journals for the authenticated user
-            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)  // Ensure created_at is indexed
+            .whereEqualTo("userId", userId)
+            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { result ->
                 journalEntries.clear()
-
-                // Log the size of the returned result
-                println("Found ${result.size()} journals")
 
                 for (document in result) {
                     val journalId = document.id
                     val title = document.getString("title") ?: "No Title"
                     val imageUrl = document.getString("image_url")
                     val tagIds = document.get("tags") as? List<String> ?: listOf()
-
-                    // Log each journal's ID and title to check if they are being processed
-                    println("Processing journal: $journalId - $title")
 
                     firestore.collection("journals")
                         .document(journalId)
@@ -102,9 +93,12 @@ class HomeFragment : Fragment() {
                         .get()
                         .addOnSuccessListener { noteResult ->
                             var description = "No Notes Available"
+                            var fullDescription = description  // Store full description here
+
                             if (noteResult.documents.isNotEmpty()) {
-                                val note = noteResult.documents[0].getString("content") ?: ""
-                                description = getFirst50Words(note)
+                                fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
+                                // Use getFirst20Words for the card display
+                                description = getFirst20Words(fullDescription)
                             }
 
                             val timestamp = document.getLong("created_at") ?: 0L
@@ -114,15 +108,13 @@ class HomeFragment : Fragment() {
                                 val journalEntry = JournalEntry(
                                     journalId,
                                     title,
-                                    description,
+                                    description,  // Show only 20 words on card
                                     formattedDate,
                                     tags,
-                                    imageUrl
+                                    imageUrl,
+                                    fullDescription  // Pass the full description
                                 )
                                 journalEntries.add(journalEntry)
-
-                                // Log when a journal entry is added
-                                println("Added journal entry: $title")
                                 journalAdapter.notifyDataSetChanged()
                             }
                         }
@@ -133,7 +125,6 @@ class HomeFragment : Fragment() {
                 Toast.makeText(requireContext(), "Failed to load journals: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
-
 
     // Function to format timestamp into a human-readable date
     private fun formatTimestamp(timestamp: Long): String {
@@ -166,9 +157,8 @@ class HomeFragment : Fragment() {
                 callback(tags) // Return empty tags in case of failure
             }
     }
-
-    private fun getFirst50Words(content: String): String {
-        val words = content.split("\\s+".toRegex()).take(50)
-        return words.joinToString(" ") + if (words.size == 50) "..." else ""
+    private fun getFirst20Words(content: String): String {
+        val words = content.split("\\s+".toRegex()).take(20)  // Ambil hanya 20 kata pertama
+        return words.joinToString(" ") + if (words.size == 20) "..." else ""  // Tambahkan "..." jika ada lebih dari 20 kata
     }
 }

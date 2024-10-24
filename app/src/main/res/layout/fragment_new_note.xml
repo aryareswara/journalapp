@@ -68,13 +68,5 @@
             android:background="?attr/selectableItemBackground"
             android:layout_marginEnd="16dp" />
 
-        <!-- Add Image Button -->
-        <ImageButton
-            android:id="@+id/btn_add_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/gallery"
-            android:contentDescription="Add Image"
-            android:background="?attr/selectableItemBackground" />
     </LinearLayout>
 </LinearLayout>

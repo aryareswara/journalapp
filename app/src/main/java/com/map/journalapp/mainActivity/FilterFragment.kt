@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import com.map.journalapp.mainActivity.HomeFragment
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
@@ -98,9 +97,12 @@ class FilterFragment : Fragment() {
                                     .get()
                                     .addOnSuccessListener { noteResult ->
                                         var description = "No Notes Available"
+                                        var fullDescription = description  // Store full description here
+
                                         if (noteResult.documents.isNotEmpty()) {
-                                            val note = noteResult.documents[0].getString("content") ?: ""
-                                            description = getFirst50Words(note)
+                                            fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
+                                            // Use getFirst20Words for the card display
+                                            description = getFirst20Words(fullDescription)
                                         }
 
                                         val timestamp = document.getLong("created_at") ?: 0L
@@ -111,10 +113,11 @@ class FilterFragment : Fragment() {
                                             val journalEntry = JournalEntry(
                                                 id = journalId,
                                                 title = title,
-                                                description = description,
+                                                shortDescription = description,  // Show only 20 words on card
                                                 createdAt = formattedDate,
                                                 tags = tags,  // Translated tag names
-                                                imageUrl = imageUrl
+                                                imageUrl = imageUrl,
+                                                fullDescription = fullDescription  // Store the full description
                                             )
                                             journalEntries.add(journalEntry)
 
@@ -144,7 +147,7 @@ class FilterFragment : Fragment() {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.description)  // Pass the note content
+                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
             }
         }
 
@@ -154,9 +157,9 @@ class FilterFragment : Fragment() {
         transaction.commit()
     }
 
-    private fun getFirst50Words(content: String): String {
-        val words = content.split("\\s+".toRegex()).take(50)
-        return words.joinToString(" ") + if (words.size == 50) "..." else ""
+    private fun getFirst20Words(content: String): String {
+        val words = content.split("\\s+".toRegex()).take(20)  // Take only the first 20 words
+        return words.joinToString(" ") + if (words.size == 20) "..." else ""  // Add "..." if there are more than 20 words
     }
 
     // Fetch tag names from Firestore based on tag IDs

@@ -1,13 +1,6 @@
 package com.map.journalapp.write
 
-import android.app.Activity
-import android.content.Intent
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ImageSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,9 +8,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.Chip
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.databinding.FragmentNewNoteBinding
-import java.io.InputStream
 import java.util.*
 
 class NewNoteFragment : Fragment() {
@@ -25,9 +16,6 @@ class NewNoteFragment : Fragment() {
     private var _binding: FragmentNewNoteBinding? = null
     private val binding get() = _binding!!
 
-    private val REQUEST_IMAGE_SELECT = 1002
-    private var imageUri: Uri? = null
-    private val storage = FirebaseStorage.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
     // Journal ID and Title passed from FillJournalFragment
@@ -63,14 +51,14 @@ class NewNoteFragment : Fragment() {
         // Display the tags under the title
         displayTags()
 
-        // Handle adding an image to the note content
-        binding.btnAddImage.setOnClickListener {
-            selectImageForNote()
-        }
-
         // Save note content
         binding.btnSave.setOnClickListener {
             saveNoteToFirestore()
+        }
+
+        // Handle delete note action
+        binding.btnDelete.setOnClickListener {
+            deleteNoteFromFirestore()
         }
     }
 
@@ -99,60 +87,6 @@ class NewNoteFragment : Fragment() {
             }
         } else {
             println("No tags to display")
-        }
-    }
-
-
-    private fun selectImageForNote() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        startActivityForResult(intent, REQUEST_IMAGE_SELECT)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_IMAGE_SELECT && resultCode == Activity.RESULT_OK) {
-            imageUri = data?.data
-            insertImageIntoNote()
-        }
-    }
-
-    // Insert the image into the note's EditText
-    private fun insertImageIntoNote() {
-        if (imageUri != null) {
-            try {
-                // Open the input stream from the URI
-                val inputStream: InputStream? = requireContext().contentResolver.openInputStream(imageUri!!)
-
-                // Decode the image
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-
-                // Check if the bitmap was loaded successfully
-                if (bitmap != null) {
-                    // Create an ImageSpan from the loaded image
-                    val imageSpan = ImageSpan(requireContext(), bitmap)
-
-                    // Get the current text from the EditText
-                    val content = binding.journalContentInput.text
-
-                    // Create a SpannableString from the existing content
-                    val spannableString = SpannableString(content)
-
-                    // Insert the ImageSpan at the current cursor position
-                    val start = binding.journalContentInput.selectionStart
-                    spannableString.setSpan(imageSpan, start, start + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-                    // Update the EditText with the SpannableString
-                    binding.journalContentInput.setText(spannableString)
-                    binding.journalContentInput.setSelection(start + 1) // Move cursor after the image
-                } else {
-                    Toast.makeText(requireContext(), "Failed to decode image", Toast.LENGTH_SHORT).show()
-                }
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
-            }
         }
     }
 
@@ -203,6 +137,45 @@ class NewNoteFragment : Fragment() {
             } else {
                 Toast.makeText(requireContext(), "Please write something in the note", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun deleteNoteFromFirestore() {
+        if (journalId != null) {
+            // Hapus catatan yang ada di Firestore
+            firestore.collection("journals").document(journalId!!)
+                .collection("notes")
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    // Cek apakah ada catatan yang ditemukan
+                    if (!querySnapshot.isEmpty) {
+                        // Hapus semua dokumen yang terkait dengan catatan ini
+                        for (document in querySnapshot.documents) {
+                            firestore.collection("journals")
+                                .document(journalId!!)
+                                .collection("notes")
+                                .document(document.id)
+                                .delete()
+                                .addOnSuccessListener {
+                                    Toast.makeText(requireContext(), "Note deleted successfully", Toast.LENGTH_SHORT).show()
+                                    // Kembali ke layar sebelumnya atau perbarui UI setelah penghapusan
+                                    requireActivity().supportFragmentManager.popBackStack()
+                                }
+                                .addOnFailureListener { exception ->
+                                    // Menangani kegagalan penghapusan
+                                    Toast.makeText(requireContext(), "Failed to delete note: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    } else {
+                        Toast.makeText(requireContext(), "No note found to delete", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    // Menangani kegagalan dalam pengambilan catatan
+                    Toast.makeText(requireContext(), "Failed to find note: ${exception.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Toast.makeText(requireContext(), "Journal ID is null", Toast.LENGTH_SHORT).show()
         }
     }
 
