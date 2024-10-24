@@ -60,14 +60,6 @@
                 android:text="01.01.2024"
                 android:textSize="12sp"
                 android:textColor="@android:color/darker_gray" />
-
-            <ImageView
-                android:id="@+id/lockIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="end"
-                android:src="@drawable/ic_lock"
-                android:contentDescription="Private" />
         </LinearLayout>
 
         <!-- ChipGroup for Tags -->
