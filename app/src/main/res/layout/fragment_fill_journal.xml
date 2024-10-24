@@ -20,7 +20,7 @@
             android:layout_marginBottom="8dp" />
 
         <EditText
-            android:id="@+id/journal_title_input"
+            android:id="@+id/journalTitleInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Your title here..."
@@ -43,7 +43,7 @@
             android:gravity="center_horizontal">
 
             <EditText
-                android:id="@+id/tag_input"
+                android:id="@+id/tagInput"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -53,7 +53,7 @@
                 android:layout_marginEnd="8dp" />
 
             <Button
-                android:id="@+id/add_tag_button"
+                android:id="@+id/addTagButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Add Tag" />
@@ -67,7 +67,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             app:chipSpacing="8dp"
-            app:singleSelection="false"/>
+            app:singleSelection="false" />
 
         <!-- Location Allow/Not Allow -->
         <TextView
@@ -79,24 +79,33 @@
             android:layout_marginTop="16dp" />
 
         <RadioGroup
-            android:id="@+id/location_option_group"
+            android:id="@+id/locationOptionGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
             <RadioButton
-                android:id="@+id/location_allow"
+                android:id="@+id/allowLocationOption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Allow" />
 
             <RadioButton
-                android:id="@+id/location_not_allow"
+                android:id="@+id/notAllowLocationOption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Not Allow" />
         </RadioGroup>
+
+        <!-- Location Display -->
+        <TextView
+            android:id="@+id/locationDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location will appear here if allowed"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
 
         <!-- Add Image Button -->
         <TextView
@@ -108,7 +117,7 @@
 
         <!-- Placeholder for selected image -->
         <ImageView
-            android:id="@+id/journal_cover_image"
+            android:id="@+id/journalCoverImage"
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:layout_gravity="center_horizontal"
@@ -118,7 +127,7 @@
 
         <!-- Button to select an image -->
         <Button
-            android:id="@+id/select_image_button"
+            android:id="@+id/selectImageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Select Image"
@@ -128,7 +137,7 @@
 
         <!-- Button to proceed -->
         <Button
-            android:id="@+id/btn_to_story"
+            android:id="@+id/btnToStory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="To the story"

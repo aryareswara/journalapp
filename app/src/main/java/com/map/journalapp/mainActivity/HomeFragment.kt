@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldPath
 import com.map.journalapp.R
@@ -69,17 +70,31 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadJournals() {
+        val user = FirebaseAuth.getInstance().currentUser
+        val userId = user?.uid ?: return  // Ensure the user is authenticated
+
+        // Log the current user ID for verification
+        println("Current User ID: $userId")
+
         firestore.collection("journals")
-            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)  // Sort by created_at descending
+            .whereEqualTo("userId", userId)  // Only retrieve journals for the authenticated user
+            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)  // Ensure created_at is indexed
             .get()
             .addOnSuccessListener { result ->
-                journalEntries.clear()  // Clear existing entries to avoid duplicates
+                journalEntries.clear()
+
+                // Log the size of the returned result
+                println("Found ${result.size()} journals")
+
                 for (document in result) {
                     val journalId = document.id
                     val title = document.getString("title") ?: "No Title"
+                    val imageUrl = document.getString("image_url")
                     val tagIds = document.get("tags") as? List<String> ?: listOf()
 
-                    // Fetch the first note (or a placeholder if none exists)
+                    // Log each journal's ID and title to check if they are being processed
+                    println("Processing journal: $journalId - $title")
+
                     firestore.collection("journals")
                         .document(journalId)
                         .collection("notes")
@@ -92,28 +107,33 @@ class HomeFragment : Fragment() {
                                 description = getFirst50Words(note)
                             }
 
-                            // Get the timestamp and format it to a readable date
                             val timestamp = document.getLong("created_at") ?: 0L
-                            val formattedDate = formatTimestamp(timestamp)  // Convert timestamp to date string
+                            val formattedDate = formatTimestamp(timestamp)
 
                             fetchTags(tagIds) { tags ->
                                 val journalEntry = JournalEntry(
                                     journalId,
                                     title,
                                     description,
-                                    formattedDate,  // Use formatted date
-                                    tags
+                                    formattedDate,
+                                    tags,
+                                    imageUrl
                                 )
                                 journalEntries.add(journalEntry)
-                                journalAdapter.notifyDataSetChanged()  // Notify adapter of new data
+
+                                // Log when a journal entry is added
+                                println("Added journal entry: $title")
+                                journalAdapter.notifyDataSetChanged()
                             }
                         }
                 }
             }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load journals", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+                Toast.makeText(requireContext(), "Failed to load journals: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
+
 
     // Function to format timestamp into a human-readable date
     private fun formatTimestamp(timestamp: Long): String {

@@ -1,4 +1,4 @@
-package com.map.journalapp
+package com.map.journalapp.mainActivity
 
 import android.app.Activity
 import android.content.Intent
@@ -17,7 +17,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentSettingBinding
+import com.map.journalapp.logreg.LoginActivity
 
 class SettingFragment : Fragment() {
 
@@ -47,8 +49,8 @@ class SettingFragment : Fragment() {
 
         // Fetch user name and profile image from Firestore
         user?.let {
-            fetchUserName(it.uid) // Fetch name using user ID
-            fetchUserProfileImage(it.uid) // Fetch profile image
+            fetchUserName(it.uid)
+            fetchUserProfileImage(it.uid)
         }
 
         // Set up upload photo button
@@ -59,19 +61,22 @@ class SettingFragment : Fragment() {
         // Set up edit/save button
         binding.btnEditSave.setOnClickListener {
             if (isEditing) {
-                // Save changes to the name
                 val newName = binding.settingNameEdit.text.toString().trim()
                 if (newName.isNotEmpty()) {
-                    updateUserName(user?.uid, newName) // Update name in Firestore
+                    updateUserName(user?.uid, newName)
                 }
             } else {
-                // Enter edit mode
-                binding.settingNameEdit.setText(binding.settingNameTextView.text) // Fill EditText with current name
-                binding.settingNameEdit.visibility = View.VISIBLE // Show EditText
-                binding.settingNameTextView.visibility = View.GONE // Hide TextView
-                binding.btnEditSave.text = "Save" // Change button to "Save"
+                binding.settingNameEdit.setText(binding.settingNameTextView.text)
+                binding.settingNameEdit.visibility = View.VISIBLE
+                binding.settingNameTextView.visibility = View.GONE
+                binding.btnEditSave.text = "Save"
                 isEditing = true
             }
+        }
+
+        // Set up logout button
+        binding.btnLogout.setOnClickListener {
+            logoutUser()
         }
 
         return binding.root
@@ -81,7 +86,7 @@ class SettingFragment : Fragment() {
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
-                    val userName = document.getString("name") // Adjust with the field name in Firestore
+                    val userName = document.getString("name")
                     binding.settingNameTextView.text = userName ?: "No Name"
                 } else {
                     binding.settingNameTextView.text = "No Name"
@@ -98,40 +103,34 @@ class SettingFragment : Fragment() {
                 if (document != null && document.exists()) {
                     val profileImageUrl = document.getString("profileImageUrl")
                     if (!profileImageUrl.isNullOrEmpty()) {
-                        // Use Glide to load the profile image from the URL
                         Glide.with(this)
                             .load(profileImageUrl)
                             .into(binding.imgProfilePicture)
                     } else {
-                        // Load default image from drawable
-                        binding.imgProfilePicture.setImageResource(R.drawable.person) // Ganti dengan nama drawable Anda
+                        binding.imgProfilePicture.setImageResource(R.drawable.person)
                     }
                 } else {
-                    // Load default image from drawable
-                    binding.imgProfilePicture.setImageResource(R.drawable.person) // Ganti dengan nama drawable Anda
+                    binding.imgProfilePicture.setImageResource(R.drawable.person)
                 }
             }
-            .addOnFailureListener { exception ->
-                // Load default image from drawable in case of an error
-                binding.imgProfilePicture.setImageResource(R.drawable.person) // Ganti dengan nama drawable Anda
+            .addOnFailureListener {
+                binding.imgProfilePicture.setImageResource(R.drawable.person)
             }
     }
 
     private fun updateUserName(userId: String?, newName: String) {
         if (userId != null) {
-            val updates = mutableMapOf<String, Any>(
-                "name" to newName
-            )
+            val updates = mapOf("name" to newName)
 
             firestore.collection("users").document(userId).update(updates)
                 .addOnSuccessListener {
-                    binding.settingNameTextView.text = newName // Update displayed name
-                    binding.settingNameEdit.visibility = View.GONE // Hide EditText
-                    binding.settingNameTextView.visibility = View.VISIBLE // Show TextView
-                    binding.btnEditSave.text = "Edit" // Change button back to "Edit"
+                    binding.settingNameTextView.text = newName
+                    binding.settingNameEdit.visibility = View.GONE
+                    binding.settingNameTextView.visibility = View.VISIBLE
+                    binding.btnEditSave.text = "Edit"
                     isEditing = false
                 }
-                .addOnFailureListener { e ->
+                .addOnFailureListener {
                     // Handle the error
                 }
         }
@@ -152,13 +151,13 @@ class SettingFragment : Fragment() {
 
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "image/*" // Use ACTION_GET_CONTENT to get images
-        startForResult.launch(intent) // Launch the intent
+        intent.type = "image/*"
+        startForResult.launch(intent)
     }
 
     private fun openCamera() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startForResult.launch(intent) // Launch the camera intent
+        startForResult.launch(intent)
     }
 
     private val startForResult =
@@ -168,7 +167,6 @@ class SettingFragment : Fragment() {
                 profileImageUri = data?.data
                 binding.imgProfilePicture.setImageURI(profileImageUri)
 
-                // After getting the image URI, upload it to Firebase Storage
                 profileImageUri?.let { uri ->
                     uploadProfileImage(uri)
                 }
@@ -181,14 +179,11 @@ class SettingFragment : Fragment() {
 
         storageRef.putFile(uri)
             .addOnSuccessListener {
-                // Get the download URL of the uploaded image
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                    // Save the URL to Firestore
                     saveProfileImageUrlToFirestore(userId, downloadUrl.toString())
                 }
             }
             .addOnFailureListener { e ->
-                // Handle upload error
                 Toast.makeText(requireContext(), "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
@@ -197,13 +192,19 @@ class SettingFragment : Fragment() {
         firestore.collection("users").document(userId)
             .update("profileImageUrl", imageUrl)
             .addOnSuccessListener {
-                // URL successfully saved
                 Toast.makeText(requireContext(), "Profile image updated successfully!", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
-                // Handle error when saving URL
                 Toast.makeText(requireContext(), "Failed to update profile image URL: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun logoutUser() {
+        auth.signOut()
+        // Navigate to the login screen or handle post-logout actions
+        val intent = Intent(requireContext(), LoginActivity::class.java) // Replace with your login activity
+        startActivity(intent)
+        activity?.finish() // Close the current activity
     }
 
     override fun onDestroyView() {
@@ -211,3 +212,4 @@ class SettingFragment : Fragment() {
         _binding = null
     }
 }
+

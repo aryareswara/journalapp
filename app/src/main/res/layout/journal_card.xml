@@ -38,10 +38,10 @@
         <ImageView
             android:id="@+id/journalImage"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="200dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/background_new_journal"
-            android:layout_marginTop="8dp" />
+            android:adjustViewBounds="true"
+            android:visibility="visible" />
 
         <!-- Date and Lock Icon -->
         <LinearLayout
@@ -61,13 +61,6 @@
                 android:textSize="12sp"
                 android:textColor="@android:color/darker_gray" />
 
-            <ImageView
-                android:id="@+id/lockIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="end"
-                android:src="@drawable/ic_lock"
-                android:contentDescription="Private" />
         </LinearLayout>
 
         <!-- ChipGroup for Tags -->

@@ -49,17 +49,21 @@ class NewNoteFragment : Fragment() {
         // Get the journal ID, title, and content from arguments
         journalId = arguments?.getString("journalId")
         journalTitle = arguments?.getString("journalTitle")
-        val noteContent = arguments?.getString("noteContent")  // Retrieve the note content
+        journalTags = arguments?.getStringArrayList("journalTags")  // Get tags from arguments
 
         // Set the journal title in the TextView
         binding.journalTitleDisplay.text = journalTitle
 
         // Display the note content in the EditText
+        val noteContent = arguments?.getString("noteContent")
         if (!noteContent.isNullOrEmpty()) {
-            binding.journalContentInput.setText(noteContent)  // Set the note content
+            binding.journalContentInput.setText(noteContent)
         }
 
-        // Add image to the note content
+        // Display the tags under the title
+        displayTags()
+
+        // Handle adding an image to the note content
         binding.btnAddImage.setOnClickListener {
             selectImageForNote()
         }
@@ -72,7 +76,8 @@ class NewNoteFragment : Fragment() {
 
     // Function to display tags
     private fun displayTags() {
-        if (journalTags != null) {
+        // Ensure journalTags is not null or empty
+        if (journalTags != null && journalTags!!.isNotEmpty()) {
             for (tagId in journalTags!!) {
                 // Fetch the tag name from Firestore based on tagId
                 firestore.collection("tags").document(tagId).get()
@@ -86,10 +91,14 @@ class NewNoteFragment : Fragment() {
                             binding.tagContainer.addView(chip)  // tagContainer is a LinearLayout
                         }
                     }
-                    .addOnFailureListener {
+                    .addOnFailureListener { exception ->
+                        // Log the error for debugging
+                        exception.printStackTrace()
                         Toast.makeText(requireContext(), "Failed to load tag: $tagId", Toast.LENGTH_SHORT).show()
                     }
             }
+        } else {
+            println("No tags to display")
         }
     }
 
@@ -173,6 +182,9 @@ class NewNoteFragment : Fragment() {
                 "created_at" to System.currentTimeMillis()
             )
 
+            // Log journalId for debugging
+            println("Saving note to journal ID: $journalId")
+
             // Save the note to the notes subcollection under the specific journal
             firestore.collection("journals").document(journalId!!)
                 .collection("notes")
@@ -180,11 +192,17 @@ class NewNoteFragment : Fragment() {
                 .addOnSuccessListener {
                     Toast.makeText(requireContext(), "Note saved!", Toast.LENGTH_SHORT).show()
                 }
-                .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Failed to save note", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener { exception ->
+                    // Log the error for debugging
+                    exception.printStackTrace()
+                    Toast.makeText(requireContext(), "Failed to save note: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
         } else {
-            Toast.makeText(requireContext(), "Please write something in the note", Toast.LENGTH_SHORT).show()
+            if (journalId == null) {
+                Toast.makeText(requireContext(), "Journal ID is null", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Please write something in the note", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

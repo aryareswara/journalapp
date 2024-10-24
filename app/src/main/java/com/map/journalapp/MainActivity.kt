@@ -13,6 +13,7 @@ import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.HomeFragment
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
+import com.map.journalapp.mainActivity.SettingFragment
 
 class MainActivity : AppCompatActivity() {
 
