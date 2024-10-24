@@ -2,16 +2,22 @@ package com.map.journalapp.write
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ImageSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.android.material.chip.Chip
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.databinding.FragmentNewNoteBinding
+import java.io.InputStream
 import java.util.*
 
 class NewNoteFragment : Fragment() {
@@ -24,8 +30,10 @@ class NewNoteFragment : Fragment() {
     private val storage = FirebaseStorage.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
-    // Journal ID passed from FillJournalFragment
+    // Journal ID and Title passed from FillJournalFragment
     private var journalId: String? = null
+    private var journalTitle: String? = null
+    private var journalTags: ArrayList<String>? = null  // To store tags
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,8 +46,16 @@ class NewNoteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Get the journal ID from arguments
+        // Get the journal ID, title, and tags from arguments
         journalId = arguments?.getString("journalId")
+        journalTitle = arguments?.getString("journalTitle")
+        journalTags = arguments?.getStringArrayList("journalTags")
+
+        // Set the journal title in the TextView
+        binding.journalTitleDisplay.text = journalTitle
+
+        // Display the tags in a mini box under the title
+        displayTags()
 
         // Add image to the note content
         binding.btnAddImage.setOnClickListener {
@@ -49,6 +65,29 @@ class NewNoteFragment : Fragment() {
         // Save note content
         binding.btnSave.setOnClickListener {
             saveNoteToFirestore()
+        }
+    }
+
+    // Function to display tags
+    private fun displayTags() {
+        if (journalTags != null) {
+            for (tagId in journalTags!!) {
+                // Fetch the tag name from Firestore based on tagId
+                firestore.collection("tags").document(tagId).get()
+                    .addOnSuccessListener { document ->
+                        val tagName = document.getString("tagName")
+                        if (!tagName.isNullOrEmpty()) {
+                            // Create a Chip with the tag name and add it to the tagContainer
+                            val chip = Chip(requireContext())
+                            chip.text = tagName
+                            chip.isClickable = false
+                            binding.tagContainer.addView(chip)  // tagContainer is a LinearLayout
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(requireContext(), "Failed to load tag: $tagId", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
     }
 
@@ -62,24 +101,45 @@ class NewNoteFragment : Fragment() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_SELECT && resultCode == Activity.RESULT_OK) {
             imageUri = data?.data
-            uploadImageAndInsertIntoNote()
+            insertImageIntoNote()
         }
     }
 
-    private fun uploadImageAndInsertIntoNote() {
+    // Insert the image into the note's EditText
+    private fun insertImageIntoNote() {
         if (imageUri != null) {
-            val storageRef = storage.reference.child("note_images/${UUID.randomUUID()}.jpg")
-            val uploadTask = storageRef.putFile(imageUri!!)
+            try {
+                // Open the input stream from the URI
+                val inputStream: InputStream? = requireContext().contentResolver.openInputStream(imageUri!!)
 
-            uploadTask.addOnSuccessListener {
-                storageRef.downloadUrl.addOnSuccessListener { uri ->
-                    val imageUrl = uri.toString()
-                    // Insert the image URL into the note content (as a placeholder)
-                    val currentText = binding.journalContentInput.text.toString()
-                    binding.journalContentInput.setText("$currentText\n[Image: $imageUrl]")
+                // Decode the image
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+
+                // Check if the bitmap was loaded successfully
+                if (bitmap != null) {
+                    // Create an ImageSpan from the loaded image
+                    val imageSpan = ImageSpan(requireContext(), bitmap)
+
+                    // Get the current text from the EditText
+                    val content = binding.journalContentInput.text
+
+                    // Create a SpannableString from the existing content
+                    val spannableString = SpannableString(content)
+
+                    // Insert the ImageSpan at the current cursor position
+                    val start = binding.journalContentInput.selectionStart
+                    spannableString.setSpan(imageSpan, start, start + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                    // Update the EditText with the SpannableString
+                    binding.journalContentInput.setText(spannableString)
+                    binding.journalContentInput.setSelection(start + 1) // Move cursor after the image
+                } else {
+                    Toast.makeText(requireContext(), "Failed to decode image", Toast.LENGTH_SHORT).show()
                 }
-            }.addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -114,4 +174,3 @@ class NewNoteFragment : Fragment() {
         _binding = null
     }
 }
-

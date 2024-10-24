@@ -48,11 +48,11 @@ class FillJournalFragment : Fragment() {
             openImageSelector()
         }
 
-        // Add tag button click listener to add tag from EditText to ChipGroup
+        // Add tag button click listener to add tag from EditText to ChipGroup and Firestore
         binding.addTagButton.setOnClickListener {
             val newTag = binding.tagInput.text.toString().trim() // Get text from input field
             if (newTag.isNotEmpty()) {
-                addTagToChipGroup(newTag) // Add the tag to ChipGroup
+                saveTagToFirestore(newTag) // Save the tag to Firestore
                 binding.tagInput.text.clear() // Clear the input field after adding
             } else {
                 Toast.makeText(requireContext(), "Please enter a tag", Toast.LENGTH_SHORT).show()
@@ -81,16 +81,41 @@ class FillJournalFragment : Fragment() {
 
     // Load available tags from Firestore and display them in the ChipGroup
     private fun loadTags() {
+        // Clear the current ChipGroup to avoid duplicate tags
+        binding.tagChipGroup.removeAllViews()
+
+        // Fetch tags from Firestore
         firestore.collection("tags").get()
             .addOnSuccessListener { result ->
                 for (document in result) {
                     val tagName = document.getString("tagName") ?: ""
 
-                    addTagToChipGroup(tagName, document.id) // Load tags from Firestore
+                    // Add tags from Firestore to ChipGroup
+                    addTagToChipGroup(tagName, document.id)
                 }
             }
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    // Function to add a tag to Firestore
+    private fun saveTagToFirestore(tagName: String) {
+        // Create a new tag object
+        val tagData = hashMapOf(
+            "tagName" to tagName
+        )
+
+        // Save the tag to Firestore
+        firestore.collection("tags")
+            .add(tagData)
+            .addOnSuccessListener {
+                // Reload the tags to display the newly added tag
+                loadTags()
+                Toast.makeText(requireContext(), "Tag added successfully", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to add tag", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -109,6 +134,7 @@ class FillJournalFragment : Fragment() {
             }
         }
 
+        // Add the chip to the ChipGroup
         binding.tagChipGroup.addView(chip)
     }
 
@@ -116,69 +142,39 @@ class FillJournalFragment : Fragment() {
         val title = binding.journalTitleInput.text.toString().trim()
 
         if (title.isNotEmpty() && selectedTagIds.isNotEmpty()) {
-            // Upload cover image to Firebase Storage (if selected)
-            if (coverImageUri != null) {
-                uploadImageAndSaveData(title, selectedTagIds)
-            } else {
-                saveJournalDataAndRedirect(title, selectedTagIds, null)
-            }
+            // Prepare journal data
+            val journalData = hashMapOf(
+                "title" to title,
+                "tags" to selectedTagIds,  // Save selected tags with the journal
+                "created_at" to System.currentTimeMillis()
+            )
+
+            // Save journal to Firestore
+            firestore.collection("journals")
+                .add(journalData)
+                .addOnSuccessListener { documentReference ->
+                    // Once journal is saved, navigate to NewNoteFragment and pass title, journalId, and tags
+                    val newNoteFragment = NewNoteFragment()
+                    val bundle = Bundle()
+                    bundle.putString("journalId", documentReference.id)
+                    bundle.putString("journalTitle", title)
+                    bundle.putStringArrayList("journalTags", ArrayList(selectedTagIds))  // Pass the tags
+                    newNoteFragment.arguments = bundle
+
+                    // Perform fragment transaction
+                    val transaction = requireActivity().supportFragmentManager.beginTransaction()
+                    transaction.replace(R.id.fragment_container, newNoteFragment)
+                    transaction.addToBackStack(null)
+                    transaction.commit()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(requireContext(), "Failed to save journal", Toast.LENGTH_SHORT).show()
+                }
         } else {
             Toast.makeText(requireContext(), "Please enter a title and select tags", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun uploadImageAndSaveData(title: String, tags: MutableList<String>) {
-        val storageRef = storage.reference.child("journal_covers/${UUID.randomUUID()}.jpg")
-        val uploadTask = storageRef.putFile(coverImageUri!!)
-
-        uploadTask.addOnSuccessListener {
-            storageRef.downloadUrl.addOnSuccessListener { uri ->
-                val imageUrl = uri.toString()
-                saveJournalDataAndRedirect(title, tags, imageUrl)
-            }
-        }.addOnFailureListener {
-            Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun saveJournalDataAndRedirect(title: String, tags: MutableList<String>, imageUrl: String?) {
-        // Create a new journal entry
-        val journalData = hashMapOf(
-            "title" to title,
-            "tags" to tags,
-            "coverImageUrl" to imageUrl,
-            "created_at" to System.currentTimeMillis()
-        )
-
-        // Save the journal to Firestore
-        firestore.collection("journals")
-            .add(journalData)
-            .addOnSuccessListener { journalRef ->
-                Toast.makeText(requireContext(), "Journal saved!", Toast.LENGTH_SHORT).show()
-                // Redirect to NewNoteFragment, passing the journal ID
-                redirectToNewNoteFragment(journalRef.id)
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to save journal", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun redirectToNewNoteFragment(journalId: String) {
-        // Create an instance of NewNoteFragment, passing the journalId as an argument
-        val newNoteFragment = NewNoteFragment().apply {
-            arguments = Bundle().apply {
-                putString("journalId", journalId)
-            }
-        }
-
-        // Start FragmentTransaction
-        val transaction: FragmentTransaction = requireActivity().supportFragmentManager.beginTransaction()
-
-        // Replace the current fragment (FillJournalFragment) with NewNoteFragment
-        transaction.replace(R.id.fragment_container, newNoteFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

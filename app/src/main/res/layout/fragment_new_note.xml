@@ -27,7 +27,7 @@
         <!-- Placeholder for dynamically added tags -->
     </LinearLayout>
 
-    <!-- Writing Box (where users can write and add images) -->
+    <!-- EditText for journal content (where users can write and add images) -->
     <EditText
         android:id="@+id/journal_content_input"
         android:layout_width="match_parent"
