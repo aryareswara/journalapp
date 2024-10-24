@@ -12,12 +12,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.HomeFragment
 import androidx.drawerlayout.widget.DrawerLayout
-import com.map.journalapp.R
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var drawerLayout: DrawerLayout // Declare drawerLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +29,10 @@ class MainActivity : AppCompatActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        drawerLayout = findViewById(R.id.drawer_layout)
+        drawerLayout = findViewById(R.id.drawer_layout) // Initialize drawerLayout
 
         // Enable the hamburger icon
-        toolbar.setNavigationIcon(R.drawable.ic_menu)
+        toolbar.setNavigationIcon(R.drawable.ic_menu) // Replace with your icon resource
         toolbar.setNavigationOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 drawerLayout.closeDrawer(GravityCompat.START)
@@ -48,26 +47,27 @@ class MainActivity : AppCompatActivity() {
             finish()
         }
 
-//        // INI INI INI INI INI
-//        if (savedInstanceState == null) {
-//            // Initialize the HomeFragment here or wait for user action
-//            loadHomeFragment()
-//        }
-    }
-
-    private fun loadHomeFragment() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, HomeFragment())
-            .commit()
+        // Load the HomeFragment when the activity starts
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HomeFragment())
+                .commit()
+        }
     }
 
     private fun setStatusBarColor() {
+        // Get the color for the status bar
         val color = TypedValue().also { theme.resolveAttribute(R.color.white, it, true) }.data
         window.statusBarColor = color
+
+        // Use WindowInsetsControllerCompat for setting icon colors
         val controller = WindowInsetsControllerCompat(window, window.decorView)
+
+        // Check the current theme mode and set the appropriate icon colors
         controller.isAppearanceLightStatusBars = !isDarkTheme()
     }
 
+    // Helper function to determine if the app is in dark mode
     private fun isDarkTheme(): Boolean {
         return (resources.configuration.uiMode and
                 Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
