@@ -142,42 +142,22 @@ class NewNoteFragment : Fragment() {
 
     private fun deleteNoteFromFirestore() {
         if (journalId != null) {
-            // Hapus catatan yang ada di Firestore
+            // Delete the journal document itself
             firestore.collection("journals").document(journalId!!)
-                .collection("notes")
-                .get()
-                .addOnSuccessListener { querySnapshot ->
-                    // Cek apakah ada catatan yang ditemukan
-                    if (!querySnapshot.isEmpty) {
-                        // Hapus semua dokumen yang terkait dengan catatan ini
-                        for (document in querySnapshot.documents) {
-                            firestore.collection("journals")
-                                .document(journalId!!)
-                                .collection("notes")
-                                .document(document.id)
-                                .delete()
-                                .addOnSuccessListener {
-                                    Toast.makeText(requireContext(), "Note deleted successfully", Toast.LENGTH_SHORT).show()
-                                    // Kembali ke layar sebelumnya atau perbarui UI setelah penghapusan
-                                    requireActivity().supportFragmentManager.popBackStack()
-                                }
-                                .addOnFailureListener { exception ->
-                                    // Menangani kegagalan penghapusan
-                                    Toast.makeText(requireContext(), "Failed to delete note: ${exception.message}", Toast.LENGTH_SHORT).show()
-                                }
-                        }
-                    } else {
-                        Toast.makeText(requireContext(), "No note found to delete", Toast.LENGTH_SHORT).show()
-                    }
+                .delete()
+                .addOnSuccessListener {
+                    Toast.makeText(requireContext(), "Journal deleted successfully", Toast.LENGTH_SHORT).show()
+                    // Navigate back or refresh UI after deletion
+                    requireActivity().supportFragmentManager.popBackStack()
                 }
                 .addOnFailureListener { exception ->
-                    // Menangani kegagalan dalam pengambilan catatan
-                    Toast.makeText(requireContext(), "Failed to find note: ${exception.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Failed to delete journal: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
         } else {
             Toast.makeText(requireContext(), "Journal ID is null", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
