@@ -2,15 +2,20 @@ package com.map.journalapp.mainActivity
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -20,6 +25,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentSettingBinding
 import com.map.journalapp.logreg.LoginActivity
+import java.io.File
 
 class SettingFragment : Fragment() {
 
@@ -28,10 +34,10 @@ class SettingFragment : Fragment() {
     private var profileImageUri: Uri? = null
     private var isEditing = false
 
-    // Firebase Auth, Firestore, and Storage instances
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var storage: FirebaseStorage
+    private lateinit var photoUri: Uri
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,26 +45,21 @@ class SettingFragment : Fragment() {
     ): View? {
         _binding = FragmentSettingBinding.inflate(inflater, container, false)
 
-        // Initialize Firebase Auth, Firestore, and Storage
         auth = FirebaseAuth.getInstance()
         firestore = Firebase.firestore
         storage = FirebaseStorage.getInstance()
 
-        // Get current user
         val user = auth.currentUser
 
-        // Fetch user name and profile image from Firestore
         user?.let {
             fetchUserName(it.uid)
             fetchUserProfileImage(it.uid)
         }
 
-        // Set up upload photo button
         binding.btnUploadPhoto.setOnClickListener {
             showImagePickerDialog()
         }
 
-        // Set up edit/save button
         binding.btnEditSave.setOnClickListener {
             if (isEditing) {
                 val newName = binding.settingNameEdit.text.toString().trim()
@@ -74,7 +75,6 @@ class SettingFragment : Fragment() {
             }
         }
 
-        // Set up logout button
         binding.btnLogout.setOnClickListener {
             logoutUser()
         }
@@ -156,15 +156,50 @@ class SettingFragment : Fragment() {
     }
 
     private fun openCamera() {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startForResult.launch(intent)
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(requireActivity(), arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+        } else {
+            Log.d("Camera", "Opening camera") // Tambahkan log ini
+            val photoFile = File(requireContext().cacheDir, "profile_image_${System.currentTimeMillis()}.jpg")
+            photoUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", photoFile)
+
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+            if (intent.resolveActivity(requireContext().packageManager) != null) {
+                startForResult.launch(intent)
+            } else {
+                Toast.makeText(requireContext(), "Kamera tidak tersedia", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
+
+
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CAMERA_REQUEST_CODE) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                openCamera() // Buka kamera jika izin diberikan
+            } else {
+                Toast.makeText(requireContext(), "Izin kamera diperlukan untuk mengambil foto.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
 
     private val startForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                val data = result.data
-                profileImageUri = data?.data
+                if (result.data != null && result.data?.data != null) {
+                    // Gambar diambil dari galeri
+                    profileImageUri = result.data?.data
+                } else {
+                    // Gambar diambil dari kamera
+                    profileImageUri = photoUri
+                }
+
                 binding.imgProfilePicture.setImageURI(profileImageUri)
 
                 profileImageUri?.let { uri ->
@@ -172,6 +207,8 @@ class SettingFragment : Fragment() {
                 }
             }
         }
+
+
 
     private fun uploadProfileImage(uri: Uri) {
         val userId = auth.currentUser?.uid ?: return
@@ -201,15 +238,21 @@ class SettingFragment : Fragment() {
 
     private fun logoutUser() {
         auth.signOut()
-        // Navigate to the login screen or handle post-logout actions
-        val intent = Intent(requireContext(), LoginActivity::class.java) // Replace with your login activity
+        val intent = Intent(requireContext(), LoginActivity::class.java)
         startActivity(intent)
-        activity?.finish() // Close the current activity
+        activity?.finish()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
+
+    private companion object {
+        private const val CAMERA_REQUEST_CODE = 100
+    }
+
+//    masih error
+
 }
 
