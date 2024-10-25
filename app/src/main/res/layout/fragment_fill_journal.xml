@@ -3,11 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:scrollbars="none"
     android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center_horizontal">
 
@@ -16,7 +17,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Write your title"
-            android:textSize="18sp"
+            android:textSize="36sp"
+            android:layout_gravity="start"
             android:layout_marginBottom="8dp" />
 
         <EditText
@@ -33,7 +35,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Add Tags"
-            android:textSize="18sp"
+            android:textSize="28sp"
+            android:layout_gravity="start"
             android:layout_marginBottom="8dp" />
 
         <LinearLayout
@@ -56,6 +59,7 @@
                 android:id="@+id/addTagButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/rounded_button"
                 android:text="Add Tag" />
         </LinearLayout>
 
@@ -74,7 +78,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Journal Written Location"
-            android:textSize="18sp"
+            android:textSize="28sp"
+            android:layout_gravity="start"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="16dp" />
 
@@ -83,6 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:layout_gravity="start"
             android:layout_marginBottom="16dp">
 
             <RadioButton
@@ -105,6 +111,7 @@
             android:layout_height="wrap_content"
             android:text="Location will appear here if allowed"
             android:textSize="14sp"
+            android:layout_gravity="start"
             android:layout_marginBottom="16dp" />
 
         <!-- Add Image Button -->
@@ -112,38 +119,48 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Your Journal Cover"
-            android:textSize="18sp"
+            android:textSize="28sp"
+            android:layout_gravity="start"
             android:layout_marginBottom="8dp" />
 
-        <!-- Placeholder for selected image -->
-        <ImageView
-            android:id="@+id/journalCoverImage"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_gravity="center_horizontal"
-            android:background="@android:color/darker_gray"
-            android:scaleType="centerCrop"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Button to select an image -->
-        <Button
-            android:id="@+id/selectImageButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Image"
-            android:backgroundTint="@color/purple_500"
-            android:textColor="@android:color/white"
-            android:layout_marginBottom="16dp" />
+            android:orientation="horizontal"
+            android:gravity="start">
+
+            <!-- Button to select an image -->
+            <ImageButton
+                android:id="@+id/selectImageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_photo_camera"
+                android:background="@drawable/rounded_image_select"
+                android:contentDescription="Select Image"
+                android:padding="24dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Placeholder for selected image -->
+            <ImageView
+                android:id="@+id/journalCoverImage"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/rounded_image_placeholder"
+                android:icon="@drawable/ic_image"
+                android:scaleType="centerCrop"
+                android:layout_marginStart="16dp" />
+
+        </LinearLayout>
 
         <!-- Button to proceed -->
         <Button
             android:id="@+id/btnToStory"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/rounded_button"
             android:text="To the story"
-            android:backgroundTint="@color/purple_500"
             android:textColor="@android:color/white"
-            android:padding="12dp"
             android:layout_marginTop="16dp"
             android:layout_gravity="center_horizontal" />
     </LinearLayout>

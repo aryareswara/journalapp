@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
 }
+
+val mapsKeyFile = rootProject.file("apikey.properties")
+val properties = Properties()
+mapsKeyFile.inputStream().use { inputStream ->
+    properties.load(inputStream)
+}
+
+val apiKey: String = properties.getProperty("MAPS_API_KEY") ?: ""
 
 android {
     namespace = "com.map.journalapp"
@@ -20,6 +30,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["GOOGLE_KEY"] = apiKey
     }
 
     buildTypes {

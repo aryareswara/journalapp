@@ -1,0 +1,13 @@
+<!-- res/drawable/rounded_border.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Set the background color if needed (optional) -->
+    <solid android:color="@android:color/transparent" />
+
+    <!-- Define corner radius for rounded corners -->
+    <corners android:radius="8dp" />
+
+    <!-- Define the stroke color and width -->
+    <stroke
+        android:width="0dp"
+        android:color="@android:color/darker_gray" />
+</shape>

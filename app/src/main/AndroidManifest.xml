@@ -38,7 +38,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDw9tl7yQArnPZucSvwuFXjlN8-us0gfIY" />
+            android:value="${GOOGLE_KEY}" />
 
         <activity
             android:name=".logreg.RegisterActivity"
