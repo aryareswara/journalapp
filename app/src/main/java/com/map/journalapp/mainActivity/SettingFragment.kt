@@ -19,8 +19,6 @@ import androidx.core.content.FileProvider
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentSettingBinding
@@ -45,8 +43,9 @@ class SettingFragment : Fragment() {
     ): View? {
         _binding = FragmentSettingBinding.inflate(inflater, container, false)
 
+        // Initialize Firebase instances
         auth = FirebaseAuth.getInstance()
-        firestore = Firebase.firestore
+        firestore = FirebaseFirestore.getInstance()
         storage = FirebaseStorage.getInstance()
 
         val user = auth.currentUser
@@ -56,10 +55,7 @@ class SettingFragment : Fragment() {
             fetchUserProfileImage(it.uid)
         }
 
-        binding.btnUploadPhoto.setOnClickListener {
-            showImagePickerDialog()
-        }
-
+        // Edit/Save button logic
         binding.btnEditSave.setOnClickListener {
             if (isEditing) {
                 val newName = binding.settingNameEdit.text.toString().trim()
@@ -75,9 +71,16 @@ class SettingFragment : Fragment() {
             }
         }
 
+        // Logout button
         binding.btnLogout.setOnClickListener {
             logoutUser()
         }
+
+        // Open image picker on profile picture click
+        binding.imgProfilePicture.setOnClickListener {
+            showImagePickerDialog()
+        }
+
 
         return binding.root
     }
@@ -85,14 +88,10 @@ class SettingFragment : Fragment() {
     private fun fetchUserName(userId: String) {
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val userName = document.getString("name")
-                    binding.settingNameTextView.text = userName ?: "No Name"
-                } else {
-                    binding.settingNameTextView.text = "No Name"
-                }
+                val userName = document?.getString("name") ?: "No Name"
+                binding.settingNameTextView.text = userName
             }
-            .addOnFailureListener { exception ->
+            .addOnFailureListener {
                 binding.settingNameTextView.text = "Error fetching name"
             }
     }
@@ -100,15 +99,9 @@ class SettingFragment : Fragment() {
     private fun fetchUserProfileImage(userId: String) {
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val profileImageUrl = document.getString("profileImageUrl")
-                    if (!profileImageUrl.isNullOrEmpty()) {
-                        Glide.with(this)
-                            .load(profileImageUrl)
-                            .into(binding.imgProfilePicture)
-                    } else {
-                        binding.imgProfilePicture.setImageResource(R.drawable.person)
-                    }
+                val profileImageUrl = document?.getString("profileImageUrl")
+                if (!profileImageUrl.isNullOrEmpty()) {
+                    Glide.with(this).load(profileImageUrl).into(binding.imgProfilePicture)
                 } else {
                     binding.imgProfilePicture.setImageResource(R.drawable.person)
                 }
@@ -119,7 +112,7 @@ class SettingFragment : Fragment() {
     }
 
     private fun updateUserName(userId: String?, newName: String) {
-        if (userId != null) {
+        userId?.let {
             val updates = mapOf("name" to newName)
 
             firestore.collection("users").document(userId).update(updates)
@@ -131,7 +124,7 @@ class SettingFragment : Fragment() {
                     isEditing = false
                 }
                 .addOnFailureListener {
-                    // Handle the error
+                    // Handle error
                 }
         }
     }
@@ -159,56 +152,33 @@ class SettingFragment : Fragment() {
         if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(requireActivity(), arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
         } else {
-            Log.d("Camera", "Opening camera") // Tambahkan log ini
             val photoFile = File(requireContext().cacheDir, "profile_image_${System.currentTimeMillis()}.jpg")
             photoUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", photoFile)
 
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-            if (intent.resolveActivity(requireContext().packageManager) != null) {
-                startForResult.launch(intent)
-            } else {
-                Toast.makeText(requireContext(), "Kamera tidak tersedia", Toast.LENGTH_SHORT).show()
-            }
+            startForResult.launch(intent)
         }
     }
-
-
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_REQUEST_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                openCamera() // Buka kamera jika izin diberikan
-            } else {
-                Toast.makeText(requireContext(), "Izin kamera diperlukan untuk mengambil foto.", Toast.LENGTH_SHORT).show()
-            }
+        if (requestCode == CAMERA_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera()
+        } else {
+            Toast.makeText(requireContext(), "Camera permission is required to take photos.", Toast.LENGTH_SHORT).show()
         }
     }
-
-
 
     private val startForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                if (result.data != null && result.data?.data != null) {
-                    // Gambar diambil dari galeri
-                    profileImageUri = result.data?.data
-                } else {
-                    // Gambar diambil dari kamera
-                    profileImageUri = photoUri
-                }
+                profileImageUri = result.data?.data ?: photoUri
 
+                // Set image to ImageView and show the Save and Use button
                 binding.imgProfilePicture.setImageURI(profileImageUri)
-
-                profileImageUri?.let { uri ->
-                    uploadProfileImage(uri)
-                }
             }
         }
-
-
 
     private fun uploadProfileImage(uri: Uri) {
         val userId = auth.currentUser?.uid ?: return
@@ -218,6 +188,7 @@ class SettingFragment : Fragment() {
             .addOnSuccessListener {
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                     saveProfileImageUrlToFirestore(userId, downloadUrl.toString())
+
                 }
             }
             .addOnFailureListener { e ->
@@ -251,8 +222,4 @@ class SettingFragment : Fragment() {
     private companion object {
         private const val CAMERA_REQUEST_CODE = 100
     }
-
-//    masih error
-
 }
-

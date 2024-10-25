@@ -11,15 +11,8 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_gravity="center"
+        android:src="@drawable/image_person"
         android:scaleType="centerCrop" />
-
-    <Button
-        android:id="@+id/btn_upload_photo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Upload Photo"
-        android:layout_gravity="center"
-        android:layout_marginTop="8dp" />
 
     <!-- Editable Name -->
     <TextView
