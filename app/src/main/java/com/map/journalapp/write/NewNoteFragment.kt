@@ -8,7 +8,9 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.Chip
 import com.google.firebase.firestore.FirebaseFirestore
+import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentNewNoteBinding
+import com.map.journalapp.mainActivity.HomeFragment
 import java.util.*
 
 class NewNoteFragment : Fragment() {
@@ -125,6 +127,11 @@ class NewNoteFragment : Fragment() {
                 .add(noteData)
                 .addOnSuccessListener {
                     Toast.makeText(requireContext(), "Note saved!", Toast.LENGTH_SHORT).show()
+
+                    val transaction = requireActivity().supportFragmentManager.beginTransaction()
+                    transaction.replace(R.id.fragment_container, HomeFragment())
+                    transaction.addToBackStack(null)
+                    transaction.commit()
                 }
                 .addOnFailureListener { exception ->
                     // Log the error for debugging

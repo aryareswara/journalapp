@@ -1,72 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center_horizontal">
+    android:layout_height="match_parent">
 
-    <!-- Journal Title -->
-    <TextView
-        android:id="@+id/journal_title_display"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="A Day in My Life in the University"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
-
-    <!-- Tag Chips (Selected Tags) -->
-    <LinearLayout
-        android:id="@+id/tag_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-
-        <!-- Placeholder for dynamically added tags -->
-    </LinearLayout>
-
-    <!-- EditText for journal content (where users can write and add images) -->
-    <EditText
-        android:id="@+id/journal_content_input"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:hint="Write your journal here..."
-        android:background="@drawable/rounded_edittext"
-        android:padding="12dp"
-        android:gravity="top"
-        android:inputType="textMultiLine"
-        android:minLines="10" />
-
-    <!-- Three action buttons: Delete, Save, and Add Image -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:layout_marginTop="16dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center_horizontal">
 
-        <!-- Delete Button -->
-        <ImageButton
-            android:id="@+id/btn_delete"
+        <!-- Journal Title -->
+        <TextView
+            android:id="@+id/journal_title_display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/delete"
-            android:contentDescription="Delete"
-            android:background="?attr/selectableItemBackground"
-            android:layout_marginEnd="16dp" />
+            android:text="A Day in My Life in the University"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-        <!-- Save Button -->
-        <ImageButton
+        <!-- Tag Chips (Selected Tags) -->
+        <LinearLayout
+            android:id="@+id/tag_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            <!-- Placeholder for dynamically added tags -->
+        </LinearLayout>
+
+        <!-- EditText for journal content (where users can write and add images) -->
+        <EditText
+            android:id="@+id/journal_content_input"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_edittext"
+            android:gravity="top"
+            android:hint="Write your journal here..."
+            android:inputType="textMultiLine"
+            android:minLines="10"
+            android:padding="12dp" />
+    </LinearLayout>
+
+    <!-- FAB -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_margin="16dp"
+        android:layout_gravity="end|bottom">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btn_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="8dp"
             android:src="@drawable/save"
-            android:contentDescription="Save"
-            android:background="?attr/selectableItemBackground"
-            android:layout_marginEnd="16dp" />
+            android:contentDescription="Save" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:src="@drawable/delete"
+            android:contentDescription="Delete" />
 
     </LinearLayout>
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
