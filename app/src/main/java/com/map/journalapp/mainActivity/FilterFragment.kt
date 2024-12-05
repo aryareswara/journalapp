@@ -1,5 +1,6 @@
 package com.map.journalapp.mainActivity
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,7 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
-import com.map.journalapp.write.NewNoteFragment
+import com.map.journalapp.write.NewNoteActivity
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,8 +39,8 @@ class FilterFragment : Fragment() {
 
         // Pass the onJournalClick function to the adapter
         journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
-            // Call openNoteFragment when a journal is clicked
-            openNoteFragment(journalEntry)
+            // Call openNoteActivity when a journal is clicked
+            openNoteActivity(journalEntry)
         }
         recyclerView.adapter = journalAdapter
 
@@ -142,19 +143,14 @@ class FilterFragment : Fragment() {
             }
     }
 
-    private fun openNoteFragment(journalEntry: JournalEntry) {
-        val newNoteFragment = NewNoteFragment().apply {
-            arguments = Bundle().apply {
-                putString("journalId", journalEntry.id)
-                putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
-            }
+    private fun openNoteActivity(journalEntry: JournalEntry) {
+        // Start the NewNoteActivity and pass the necessary data through Intent
+        val intent = Intent(requireContext(), NewNoteActivity::class.java).apply {
+            putExtra("journalId", journalEntry.id)
+            putExtra("journalTitle", journalEntry.title)
+            putExtra("noteContent", journalEntry.fullDescription)  // Pass the full note content
         }
-
-        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragment_container, newNoteFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
+        startActivity(intent)
     }
 
     private fun getFirst20Words(content: String): String {

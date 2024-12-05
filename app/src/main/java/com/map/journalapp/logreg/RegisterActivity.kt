@@ -43,25 +43,43 @@ class RegisterActivity : AppCompatActivity() {
                     if (task.isSuccessful) {
                         val user = auth.currentUser
                         user?.let {
+                            // Set user's display name
                             val profileUpdates = UserProfileChangeRequest.Builder()
                                 .setDisplayName(name)
                                 .build()
                             it.updateProfile(profileUpdates)
+                                .addOnCompleteListener { profileUpdateTask ->
+                                    if (profileUpdateTask.isSuccessful) {
+                                        // Store only email in Firestore
+                                        val userId = user.uid
 
-                            val userId = user.uid
+                                        val userData = hashMapOf(
+                                            "email" to email
+                                        )
 
-                            val userData = hashMapOf(
-                                "name" to name,
-                                "email" to email
-                            )
-
-                            db.collection("users").document(userId)
-                                .set(userData)
-
+                                        db.collection("users").document(userId)
+                                            .set(userData)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(this, "Register Successful", Toast.LENGTH_SHORT).show()
+                                                startActivity(Intent(this, LoginActivity::class.java))
+                                                finish()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(
+                                                    this,
+                                                    "Error saving user data: ${e.message}",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                    } else {
+                                        Toast.makeText(
+                                            this,
+                                            "Profile Update Failed: ${profileUpdateTask.exception?.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
                         }
-                        Toast.makeText(this, "Register Successful", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        finish()
                     } else {
                         Toast.makeText(
                             this,

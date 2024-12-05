@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scrollbars="none"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Title Input -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Write your title"
+            android:textSize="36sp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/journalTitleInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Your title here..."
+            android:background="@drawable/rounded_edittext"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Tag Input and Add Button -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Tags"
+            android:textSize="28sp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+
+            <EditText
+                android:id="@+id/tagInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Enter tag"
+                android:background="@drawable/rounded_edittext"
+                android:padding="12dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/addTagButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_button"
+                android:text="Add Tag" />
+        </LinearLayout>
+
+        <!-- ChipGroup to display and select tags -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/tagChipGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            app:chipSpacing="8dp"
+            app:singleSelection="false" />
+
+        <!-- Location Allow/Not Allow -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Journal Written Location"
+            android:textSize="28sp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="16dp" />
+
+        <RadioGroup
+            android:id="@+id/locationOptionGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="start"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/allowLocationOption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Allow" />
+
+            <RadioButton
+                android:id="@+id/notAllowLocationOption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Allow" />
+        </RadioGroup>
+
+        <!-- Location Display -->
+        <TextView
+            android:id="@+id/locationDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location will appear here if allowed"
+            android:textSize="14sp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Add Image Button -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your Journal Cover"
+            android:textSize="28sp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start">
+
+            <!-- Button to select an image -->
+            <ImageButton
+                android:id="@+id/selectImageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_photo_camera"
+                android:background="@drawable/rounded_image_select"
+                android:contentDescription="Select Image"
+                android:padding="24dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Placeholder for selected image -->
+            <ImageView
+                android:id="@+id/journalCoverImage"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/rounded_image_placeholder"
+                android:icon="@drawable/ic_image"
+                android:scaleType="centerCrop"
+                android:layout_marginStart="16dp" />
+
+        </LinearLayout>
+
+        <!-- Button to proceed -->
+        <Button
+            android:id="@+id/btnToStory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_button"
+            android:text="To the story"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+</ScrollView>

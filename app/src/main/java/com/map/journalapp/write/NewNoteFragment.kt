@@ -1,6 +1,18 @@
 package com.map.journalapp.write
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Typeface
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +20,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.Chip
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentNewNoteBinding
 import com.map.journalapp.mainActivity.HomeFragment
@@ -19,11 +32,13 @@ class NewNoteFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val firestore = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
-    // Journal ID and Title passed from FillJournalFragment
     private var journalId: String? = null
     private var journalTitle: String? = null
-    private var journalTags: ArrayList<String>? = null  // To store tags
+    private var journalTags: ArrayList<String>? = null
+
+    private val IMAGE_PICK_CODE = 1001
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,61 +51,144 @@ class NewNoteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Get the journal ID, title, and content from arguments
         journalId = arguments?.getString("journalId")
         journalTitle = arguments?.getString("journalTitle")
-        journalTags = arguments?.getStringArrayList("journalTags")  // Get tags from arguments
+        journalTags = arguments?.getStringArrayList("journalTags")
 
-        // Set the journal title in the TextView
         binding.journalTitleDisplay.text = journalTitle
 
-        // Display the note content in the EditText
         val noteContent = arguments?.getString("noteContent")
         if (!noteContent.isNullOrEmpty()) {
             binding.journalContentInput.setText(noteContent)
         }
 
-        // Display the tags under the title
         displayTags()
 
-        // Save note content
-        binding.btnSave.setOnClickListener {
-            saveNoteToFirestore()
-        }
+        binding.btnSave.setOnClickListener { saveNoteToFirestore() }
+        binding.btnDelete.setOnClickListener { deleteNoteFromFirestore() }
+        binding.btnBold.setOnClickListener { applyBoldStyle() }
+        binding.btnItalic.setOnClickListener { applyItalicStyle() }
+        binding.btnUnderline.setOnClickListener { applyUnderlineStyle() }
+        binding.btnAddImage.setOnClickListener { openGallery() }
+    }
 
-        // Handle delete note action
-        binding.btnDelete.setOnClickListener {
-            deleteNoteFromFirestore()
+    private fun applyBoldStyle() {
+        val spannable = SpannableStringBuilder(binding.journalContentInput.text)
+        val start = binding.journalContentInput.selectionStart
+        val end = binding.journalContentInput.selectionEnd
+        spannable.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        binding.journalContentInput.text = spannable
+    }
+
+    private fun applyItalicStyle() {
+        val spannable = SpannableStringBuilder(binding.journalContentInput.text)
+        val start = binding.journalContentInput.selectionStart
+        val end = binding.journalContentInput.selectionEnd
+        spannable.setSpan(StyleSpan(Typeface.ITALIC), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        binding.journalContentInput.text = spannable
+    }
+
+    private fun applyUnderlineStyle() {
+        val spannable = SpannableStringBuilder(binding.journalContentInput.text)
+        val start = binding.journalContentInput.selectionStart
+        val end = binding.journalContentInput.selectionEnd
+        spannable.setSpan(UnderlineSpan(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        binding.journalContentInput.text = spannable
+    }
+
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+         startActivityForResult(intent, IMAGE_PICK_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK) {
+            val imageUri = data?.data
+            imageUri?.let { insertImageIntoContent(it) }
+        }
+    }
+
+    private fun insertImageIntoContent(uri: Uri) {
+        try {
+            // Get the current cursor position
+            val start = binding.journalContentInput.selectionStart
+            val end = binding.journalContentInput.selectionEnd
+            val textLength = binding.journalContentInput.text?.length ?: 0
+
+            // Debug logs to understand the indices
+            println("Text length: $textLength, Selection start: $start, Selection end: $end")
+
+            // Ensure the selection start and end are within the valid range
+            if (start >= 0 && end <= textLength && start <= end) {
+                // Retrieve the original bitmap from the URI
+                val originalBitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
+
+                // Target width for the image in dp (small icon size, e.g., 100dp)
+                val targetWidthDp = 100
+                val scale = requireContext().resources.displayMetrics.density
+                val targetWidthPx = (targetWidthDp * scale).toInt()  // Convert dp to pixels
+
+                // Calculate the target height while keeping the aspect ratio
+                val scaledHeight = originalBitmap.height * targetWidthPx / originalBitmap.width
+                val resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, targetWidthPx, scaledHeight, true)
+
+                // Create an ImageSpan with the resized bitmap
+                val imageSpan = ImageSpan(requireContext(), resizedBitmap)
+
+                // Prepare SpannableStringBuilder for inserting the image
+                val spannable = SpannableStringBuilder(binding.journalContentInput.text)
+
+                // Insert a placeholder space for the image at the cursor position
+                spannable.insert(start, " ")
+
+                // Apply the ImageSpan at the current cursor position
+                spannable.setSpan(imageSpan, start, start + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                // Update the EditText with the modified spannable text
+                binding.journalContentInput.text = spannable
+
+                // Move the cursor after the inserted image
+                binding.journalContentInput.setSelection(start + 1)
+            } else {
+                Toast.makeText(requireContext(), "Invalid cursor position for image insertion.", Toast.LENGTH_SHORT).show()
+                println("Cursor position is out of bounds for the current text length.")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Failed to insert image: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     // Function to display tags
     private fun displayTags() {
-        // Ensure journalTags is not null or empty
         if (journalTags != null && journalTags!!.isNotEmpty()) {
             for (tagId in journalTags!!) {
-                // Fetch the tag name from Firestore based on tagId
                 firestore.collection("tags").document(tagId).get()
                     .addOnSuccessListener { document ->
                         val tagName = document.getString("tagName")
                         if (!tagName.isNullOrEmpty()) {
-                            // Create a Chip with the tag name and add it to the tagContainer
+                            Log.d("NewNoteFragment", "Fetched Tag: $tagName")
                             val chip = Chip(requireContext())
                             chip.text = tagName
                             chip.isClickable = false
-                            binding.tagContainer.addView(chip)  // tagContainer is a LinearLayout
+                            binding.tagContainer.addView(chip)
+                            Log.d("NewNoteFragment", "Added Tag: $tagName to tagContainer")
+                        } else {
+                            Log.d("NewNoteFragment", "Tag Name is empty for tagId: $tagId")
                         }
                     }
                     .addOnFailureListener { exception ->
-                        // Log the error for debugging
-                        exception.printStackTrace()
-                        Toast.makeText(requireContext(), "Failed to load tag: $tagId", Toast.LENGTH_SHORT).show()
+                        Log.e("NewNoteFragment", "Failed to load tag: ${exception.message}")
+                        Toast.makeText(requireContext(), "Failed to load tag", Toast.LENGTH_SHORT).show()
                     }
             }
         } else {
-            println("No tags to display")
+            Log.d("NewNoteFragment", "No tags to display")
         }
     }
+
 
     fun saveNoteToJournal(journalId: String, noteContent: String) {
         val noteData = hashMapOf(

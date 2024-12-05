@@ -22,6 +22,8 @@ import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.FilterFragment
 import com.map.journalapp.mainActivity.HomeFragment
 import com.map.journalapp.mainActivity.SettingFragment
+import com.map.journalapp.write.FillJournalActivity
+import com.map.journalapp.write.NewNoteActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -83,6 +85,16 @@ class MainActivity : AppCompatActivity() {
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
+                R.id.new_note -> {
+                    // Navigate to NewNoteActivity
+                    closeDrawerAndLaunchActivity(NewNoteActivity::class.java)
+                    true
+                }
+                R.id.fill_journal -> {
+                    // Navigate to FillJournalActivity
+                    closeDrawerAndLaunchActivity(FillJournalActivity::class.java)
+                    true
+                }
                 else -> false
             }
         }
@@ -142,7 +154,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun onTagSelected(tagId: String) {
         // Navigate to FilterFragment with the selected tag ID
         val bundle = Bundle().apply {
@@ -160,7 +171,6 @@ class MainActivity : AppCompatActivity() {
         drawerLayout.closeDrawer(GravityCompat.START)
     }
 
-
     private fun setStatusBarColor() {
         val color = TypedValue().also { theme.resolveAttribute(R.color.white, it, true) }.data
         window.statusBarColor = color
@@ -170,5 +180,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun isDarkTheme(): Boolean {
         return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+    }
+
+    private fun closeDrawerAndLaunchActivity(activityClass: Class<*>) {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        }
+        // Delay to ensure DrawerLayout is fully closed
+        drawerLayout.postDelayed({
+            val intent = Intent(this, activityClass)
+            startActivity(intent)
+        }, 250)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Ensure DrawerLayout is cleaned up completely when MainActivity stops
+        if (::drawerLayout.isInitialized) {
+            drawerLayout.removeAllViews() // Clean up any view from DrawerLayout
+        }
     }
 }

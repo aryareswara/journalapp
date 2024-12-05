@@ -31,46 +31,6 @@
             <!-- Placeholder for dynamically added tags -->
         </LinearLayout>
 
-        <!-- Formatting Toolbar -->
-        <LinearLayout
-            android:id="@+id/formatting_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp">
-
-            <Button
-                android:id="@+id/btnBold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Bold"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:background="#6200EE"
-                android:padding="8dp"/>
-
-            <Button
-                android:id="@+id/btnItalic"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Italic"
-                android:textStyle="italic"
-                android:textColor="#FFFFFF"
-                android:background="#6200EE"
-                android:padding="8dp"/>
-
-            <Button
-                android:id="@+id/btnUnderline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Underline"
-                android:textColor="#FFFFFF"
-                android:background="#6200EE"
-                android:padding="8dp"/>
-        </LinearLayout>
-
         <!-- EditText for journal content (with rich text capabilities) -->
         <EditText
             android:id="@+id/journal_content_input"
@@ -114,6 +74,6 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:src="@drawable/ic_add"
-        android:contentDescription="Add Image" />
+            android:contentDescription="Add Image" />
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
