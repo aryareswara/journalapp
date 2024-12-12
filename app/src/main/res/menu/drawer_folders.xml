@@ -1,0 +1,24 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Folder Items -->
+    <item
+        android:id="@+id/folder_1"
+        android:title="Folder 1"
+        android:icon="@drawable/ic_folder" />  <!-- Replace with your folder icon -->
+
+    <item
+        android:id="@+id/folder_2"
+        android:title="Folder 2"
+        android:icon="@drawable/ic_folder" />
+
+    <item
+        android:id="@+id/folder_3"
+        android:title="Folder 3"
+        android:icon="@drawable/ic_folder" />
+
+    <item
+        android:id="@+id/folder_4"
+        android:title="Folder 4"
+        android:icon="@drawable/ic_folder" />
+
+</menu>

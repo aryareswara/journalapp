@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldPath
@@ -43,8 +44,8 @@ class HomeFragment : Fragment() {
 
         loadJournals()
 
-        val newJournalButton: LinearLayout = view.findViewById(R.id.newJournalButton)
-        newJournalButton.setOnClickListener {
+        val fab: FloatingActionButton = view.findViewById(R.id.newJournalButton)
+        fab.setOnClickListener {
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
             transaction.replace(R.id.fragment_container, FillJournalFragment())
             transaction.addToBackStack(null)

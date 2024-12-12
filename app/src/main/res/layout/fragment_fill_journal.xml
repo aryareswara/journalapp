@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:scrollbars="none"
-    android:padding="16dp">
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:layout_margin="16dp"> <!-- Padding added to the root layout -->
 
         <!-- Title Input -->
         <TextView
@@ -28,7 +28,8 @@
             android:hint="Your title here..."
             android:background="@drawable/rounded_edittext"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="8dp" />
 
         <!-- Tag Input and Add Button -->
         <TextView
@@ -43,7 +44,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_horizontal">
+            android:gravity="center_horizontal"> <!-- Padding added for horizontal spacing -->
 
             <EditText
                 android:id="@+id/tagInput"
@@ -53,14 +54,16 @@
                 android:hint="Enter tag"
                 android:background="@drawable/rounded_edittext"
                 android:padding="12dp"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="8dp"/> <!-- Removed elevation -->
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/addTagButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rounded_button"
-                android:text="Add Tag" />
+                android:background="@drawable/rounded_button_grey"
+                android:text="Add Tag"
+                android:layout_margin="6dp"/> <!-- Removed elevation -->
         </LinearLayout>
 
         <!-- ChipGroup to display and select tags -->
@@ -138,7 +141,7 @@
                 android:background="@drawable/rounded_image_select"
                 android:contentDescription="Select Image"
                 android:padding="24dp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp" /> <!-- Removed elevation -->
 
             <!-- Placeholder for selected image -->
             <ImageView
@@ -150,18 +153,17 @@
                 android:icon="@drawable/ic_image"
                 android:scaleType="centerCrop"
                 android:layout_marginStart="16dp" />
-
         </LinearLayout>
 
         <!-- Button to proceed -->
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnToStory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rounded_button"
+            android:background="@drawable/rounded_button_dark_grey"
             android:text="To the story"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="16dp"
-            android:layout_gravity="center_horizontal" />
+            android:textColor="@android:color/black"
+            android:layout_margin="8dp"
+            android:layout_gravity="center_horizontal" /> <!-- Removed elevation -->
     </LinearLayout>
 </ScrollView>

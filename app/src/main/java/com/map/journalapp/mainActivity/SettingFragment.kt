@@ -66,10 +66,12 @@ class SettingFragment : Fragment() {
                 binding.settingNameEdit.setText(binding.settingNameTextView.text)
                 binding.settingNameEdit.visibility = View.VISIBLE
                 binding.settingNameTextView.visibility = View.GONE
+                binding.divider.visibility = View.GONE // Hide divider when editing
                 binding.btnEditSave.text = "Save"
                 isEditing = true
             }
         }
+
 
         // Logout button
         binding.btnLogout.setOnClickListener {
@@ -120,6 +122,7 @@ class SettingFragment : Fragment() {
                     binding.settingNameTextView.text = newName
                     binding.settingNameEdit.visibility = View.GONE
                     binding.settingNameTextView.visibility = View.VISIBLE
+                    binding.divider.visibility = View.VISIBLE
                     binding.btnEditSave.text = "Edit"
                     isEditing = false
                 }

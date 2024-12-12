@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         drawerLayout = findViewById(R.id.drawer_layout)
-        navigationView = findViewById(R.id.nav_view)
+        navigationView = findViewById(R.id.nav_view_top)
 
         // Find ChipGroup in the header
         val headerView: View = navigationView.getHeaderView(0)
@@ -74,18 +74,19 @@ class MainActivity : AppCompatActivity() {
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
-                R.id.setting -> {
-                    // Navigate to SettingFragment
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, SettingFragment())
-                        .addToBackStack(null)
-                        .commit()
-                    drawerLayout.closeDrawer(GravityCompat.START)
-                    true
-                }
                 else -> false
             }
         }
+
+        val profileIcon = findViewById<View>(R.id.setting)
+        profileIcon.setOnClickListener {
+            // Navigate to SettingFragment when the profile icon is clicked
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, SettingFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
 
         // Check if the user is logged in, if not, redirect to the login page
         if (auth.currentUser == null) {
