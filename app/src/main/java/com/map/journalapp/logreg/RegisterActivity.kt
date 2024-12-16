@@ -14,7 +14,7 @@ class RegisterActivity : AppCompatActivity() {
 
     // connect firebase
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
+    private lateinit var firestore: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +23,7 @@ class RegisterActivity : AppCompatActivity() {
 
         // initialize firebase
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
         // user register
         binding.registerButton.setOnClickListener {
@@ -59,7 +59,7 @@ class RegisterActivity : AppCompatActivity() {
 
                             // Store user data in firestore
                             if (userId != null) {
-                                db.collection("users").document(userId)
+                                firestore.collection("users").document(userId)
                                     .set(userData)
                                     .addOnSuccessListener {
                                         Toast.makeText(this, "Register Successful", Toast.LENGTH_SHORT).show()
