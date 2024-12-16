@@ -74,18 +74,11 @@ class SettingFragment : Fragment() {
                 binding.settingNameEdit.visibility = View.VISIBLE
                 binding.settingNameTextView.visibility = View.GONE
 
-                // Hide divider when editing
-                binding.divider.visibility = View.GONE
                 binding.btnEditSave.text = "Save"
                 isEditing = true
             }
         }
 
-
-        // Logout button
-        binding.btnLogout.setOnClickListener {
-            logoutUser()
-        }
 
         // open image picker on profile picture click
         binding.imgProfilePicture.setOnClickListener {
@@ -129,7 +122,6 @@ class SettingFragment : Fragment() {
                     binding.settingNameTextView.text = newName
                     binding.settingNameEdit.visibility = View.GONE
                     binding.settingNameTextView.visibility = View.VISIBLE
-                    binding.divider.visibility = View.VISIBLE
                     binding.btnEditSave.text = "Edit"
                     isEditing = false
                 }
@@ -205,12 +197,6 @@ class SettingFragment : Fragment() {
             }
     }
 
-    private fun logoutUser() {
-        auth.signOut()
-        val intent = Intent(requireContext(), LoginActivity::class.java)
-        startActivity(intent)
-        activity?.finish()
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

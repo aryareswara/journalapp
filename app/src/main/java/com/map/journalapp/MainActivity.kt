@@ -100,7 +100,22 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragment_container, HomeFragment())
                 .commit()
         }
+
+
+        val logoutButton = findViewById<View>(R.id.btn_logout) // Create this in your navigation drawer layout
+        logoutButton.setOnClickListener {
+            logoutUser()
+        }
+
     }
+
+    private fun logoutUser() {
+        FirebaseAuth.getInstance().signOut()
+        val intent = Intent(this, LoginActivity::class.java)
+        startActivity(intent)
+        finish()  // End MainActivity so user can't go back to it
+    }
+
 
     private fun loadTagsIntoChipGroup() {
         val currentUser = FirebaseAuth.getInstance().currentUser
