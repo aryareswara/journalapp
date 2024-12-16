@@ -10,6 +10,7 @@ import com.map.journalapp.databinding.ActivityLoginBinding
 
 class LoginActivity : AppCompatActivity() {
 
+    // using binding
     private lateinit var binding: ActivityLoginBinding;
     private lateinit var auth: FirebaseAuth;
 
@@ -18,21 +19,27 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // initialize firebase
         auth = FirebaseAuth.getInstance()
 
+        // user login
         binding.loginButton.setOnClickListener {
             loginUser()
         }
 
+        // user register
         binding.registerLink.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
     private fun loginUser() {
+        // declare email and password
+        // the function of .trim() is to delete white space in the beginning and the end of the val
         val email = binding.loginEmail.text.toString()
         val password = binding.loginPassword.text.toString()
 
+        // check if the email and password are empty or not
         if (email.isNotEmpty() && password.isNotEmpty()) {
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
@@ -48,6 +55,8 @@ class LoginActivity : AppCompatActivity() {
                         ).show()
                     }
                 }
+        } else {
+            Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show()
         }
     }
 }
