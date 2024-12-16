@@ -26,15 +26,20 @@ import com.map.journalapp.logreg.LoginActivity
 import java.io.File
 
 class SettingFragment : Fragment() {
-
+    // using binding
     private var _binding: FragmentSettingBinding? = null
     private val binding get() = _binding!!
     private var profileImageUri: Uri? = null
+
+    // bool to know change the name or not
     private var isEditing = false
 
+    // connect firebase
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var storage: FirebaseStorage
+
+    // to know captured image uri
     private lateinit var photoUri: Uri
 
     override fun onCreateView(
@@ -43,16 +48,18 @@ class SettingFragment : Fragment() {
     ): View? {
         _binding = FragmentSettingBinding.inflate(inflater, container, false)
 
-        // Initialize Firebase instances
+        // initialize firebase
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
         storage = FirebaseStorage.getInstance()
 
         val user = auth.currentUser
 
+        // fetch user data
         user?.let {
-            fetchUserName(it.uid)
-            fetchUserProfileImage(it.uid)
+            fetchUserData(it.uid)
+            // fetchUserName(it.uid)
+            // fetchUserProfileImage(it.uid)
         }
 
         // Edit/Save button logic
@@ -66,7 +73,9 @@ class SettingFragment : Fragment() {
                 binding.settingNameEdit.setText(binding.settingNameTextView.text)
                 binding.settingNameEdit.visibility = View.VISIBLE
                 binding.settingNameTextView.visibility = View.GONE
-                binding.divider.visibility = View.GONE // Hide divider when editing
+
+                // Hide divider when editing
+                binding.divider.visibility = View.GONE
                 binding.btnEditSave.text = "Save"
                 isEditing = true
             }
@@ -78,41 +87,39 @@ class SettingFragment : Fragment() {
             logoutUser()
         }
 
-        // Open image picker on profile picture click
+        // open image picker on profile picture click
         binding.imgProfilePicture.setOnClickListener {
             showImagePickerDialog()
         }
 
-
         return binding.root
     }
 
-    private fun fetchUserName(userId: String) {
+    // func for fetching user's name and pfp
+    private fun fetchUserData(userId: String) {
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
-                val userName = document?.getString("name") ?: "No Name"
-                binding.settingNameTextView.text = userName
-            }
-            .addOnFailureListener {
-                binding.settingNameTextView.text = "Error fetching name"
-            }
-    }
+                if (document.exists()) {
+                    val userName = document.getString("name") ?: "Username"
+                    val profilePicture = document.getString("profilePicture")
 
-    private fun fetchUserProfileImage(userId: String) {
-        firestore.collection("users").document(userId).get()
-            .addOnSuccessListener { document ->
-                val profileImageUrl = document?.getString("profileImageUrl")
-                if (!profileImageUrl.isNullOrEmpty()) {
-                    Glide.with(this).load(profileImageUrl).into(binding.imgProfilePicture)
-                } else {
-                    binding.imgProfilePicture.setImageResource(R.drawable.person)
+                    // change name into user's name
+                    binding.settingNameTextView.text = userName
+
+                    // load their pfp
+                    Glide.with(this)
+                        .load(profilePicture)
+                        .into(binding.imgProfilePicture)
+
                 }
             }
             .addOnFailureListener {
+                binding.settingNameTextView.text = "Error fetching user data"
                 binding.imgProfilePicture.setImageResource(R.drawable.person)
             }
     }
 
+    // func for update username
     private fun updateUserName(userId: String?, newName: String) {
         userId?.let {
             val updates = mapOf("name" to newName)
@@ -126,62 +133,51 @@ class SettingFragment : Fragment() {
                     binding.btnEditSave.text = "Edit"
                     isEditing = false
                 }
-                .addOnFailureListener {
-                    // Handle error
-                }
         }
     }
 
+    // func for give option to upload image
     private fun showImagePickerDialog() {
         val options = arrayOf("Camera", "Gallery")
         val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
         builder.setTitle("Select Image Source")
         builder.setItems(options) { _, which ->
             when (which) {
+                // from camera
                 0 -> openCamera()
+                // from gallery
                 1 -> openGallery()
             }
         }
         builder.show()
     }
 
+    private val getImageFromGallery = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            profileImageUri = it
+            binding.imgProfilePicture.setImageURI(it)
+            uploadProfileImage(it)
+        }
+    }
+
     private fun openGallery() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "image/*"
-        startForResult.launch(intent)
+        getImageFromGallery.launch("image/*")
+    }
+
+    private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
+        if (success) {
+            profileImageUri?.let {
+                binding.imgProfilePicture.setImageURI(it)
+                uploadProfileImage(it)
+            }
+        }
     }
 
     private fun openCamera() {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
-        } else {
-            val photoFile = File(requireContext().cacheDir, "profile_image_${System.currentTimeMillis()}.jpg")
-            photoUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", photoFile)
-
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-            startForResult.launch(intent)
-        }
+        val photoFile = File(requireContext().cacheDir, "profile_image_${System.currentTimeMillis()}.jpg")
+        profileImageUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", photoFile)
+        takePicture.launch(profileImageUri)
     }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            openCamera()
-        } else {
-            Toast.makeText(requireContext(), "Camera permission is required to take photos.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private val startForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                profileImageUri = result.data?.data ?: photoUri
-
-                // Set image to ImageView and show the Save and Use button
-                binding.imgProfilePicture.setImageURI(profileImageUri)
-            }
-        }
 
     private fun uploadProfileImage(uri: Uri) {
         val userId = auth.currentUser?.uid ?: return
@@ -191,7 +187,6 @@ class SettingFragment : Fragment() {
             .addOnSuccessListener {
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                     saveProfileImageUrlToFirestore(userId, downloadUrl.toString())
-
                 }
             }
             .addOnFailureListener { e ->
@@ -201,7 +196,7 @@ class SettingFragment : Fragment() {
 
     private fun saveProfileImageUrlToFirestore(userId: String, imageUrl: String) {
         firestore.collection("users").document(userId)
-            .update("profileImageUrl", imageUrl)
+            .update("profilePicture", imageUrl)
             .addOnSuccessListener {
                 Toast.makeText(requireContext(), "Profile image updated successfully!", Toast.LENGTH_SHORT).show()
             }
@@ -220,9 +215,5 @@ class SettingFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private companion object {
-        private const val CAMERA_REQUEST_CODE = 100
     }
 }
