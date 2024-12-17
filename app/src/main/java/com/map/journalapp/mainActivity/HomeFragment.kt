@@ -1,165 +1,203 @@
 package com.map.journalapp.mainActivity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
+import androidx.compose.material.Scaffold
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FieldPath
 import com.map.journalapp.R
-import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
-import com.map.journalapp.write.FillJournalFragment
-import com.map.journalapp.write.NewNoteFragment
-import java.sql.Date
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class HomeFragment : Fragment() {
 
-    private lateinit var journalAdapter: JournalAdapter
-    private val journalEntries = mutableListOf<JournalEntry>()
-    private val firestore = FirebaseFirestore.getInstance()
+    private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: android.view.LayoutInflater,
+        container: android.view.ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_home, container, false)
-
-        val recyclerView: RecyclerView = view.findViewById(R.id.journalRecycle)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-        journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
-            openNoteFragment(journalEntry)
+    ): ComposeView {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MaterialTheme {
+                    HomeScreen(
+                        journalEntries = homeViewModel.journalEntries,
+                        onAddJournalClick = { openFillJournalFragment() },
+                        onJournalClick = { journalEntry -> openNoteFragment(journalEntry) }
+                    )
+                }
+            }
         }
-        recyclerView.adapter = journalAdapter
-
-        loadJournals()
-
-        val fab: FloatingActionButton = view.findViewById(R.id.newJournalButton)
-        fab.setOnClickListener {
-            val transaction = requireActivity().supportFragmentManager.beginTransaction()
-            transaction.replace(R.id.fragment_container, FillJournalFragment())
-            transaction.addToBackStack(null)
-            transaction.commit()
-        }
-
-        return view
     }
 
     private fun openNoteFragment(journalEntry: JournalEntry) {
-        val newNoteFragment = NewNoteFragment().apply {
-            arguments = Bundle().apply {
-                putString("journalId", journalEntry.id)
-                putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
-            }
+        val bundle = Bundle().apply {
+            putString("journalId", journalEntry.id)
+            putString("journalTitle", journalEntry.title)
+            putString("noteContent", journalEntry.fullDescription)
         }
+        findNavController().navigate(R.id.newNoteFragment, bundle)
+    }
 
-        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragment_container, newNoteFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
+    private fun openFillJournalFragment() {
+        findNavController().navigate(R.id.fillJournalFragment)
+    }
+}
+
+class HomeViewModel : androidx.lifecycle.ViewModel() {
+    private val firestore = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+
+    var journalEntries by mutableStateOf(listOf<JournalEntry>())
+        private set
+
+    init {
+        loadJournals()
     }
 
     private fun loadJournals() {
-        val user = FirebaseAuth.getInstance().currentUser
-        val userId = user?.uid ?: return  // Ensure the user is authenticated
-
+        val userId = auth.currentUser?.uid ?: return
         firestore.collection("journals")
             .whereEqualTo("userId", userId)
-            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .orderBy("created_at")
             .get()
             .addOnSuccessListener { result ->
-                journalEntries.clear()
-
-                for (document in result) {
-                    val journalId = document.id
-                    val title = document.getString("title") ?: "No Title"
-                    val imageUrl = document.getString("image_url")
-                    val tagIds = document.get("tags") as? List<String> ?: listOf()
-
-                    firestore.collection("journals")
-                        .document(journalId)
-                        .collection("notes")
-                        .limit(1)
-                        .get()
-                        .addOnSuccessListener { noteResult ->
-                            var description = "No Notes Available"
-                            var fullDescription = description  // Store full description here
-
-                            if (noteResult.documents.isNotEmpty()) {
-                                fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
-                                // Use getFirst20Words for the card display
-                                description = getFirst20Words(fullDescription)
-                            }
-
-                            val timestamp = document.getLong("created_at") ?: 0L
-                            val formattedDate = formatTimestamp(timestamp)
-
-                            fetchTags(tagIds) { tags ->
-                                val journalEntry = JournalEntry(
-                                    journalId,
-                                    title,
-                                    description,  // Show only 20 words on card
-                                    formattedDate,
-                                    tags,
-                                    imageUrl,
-                                    fullDescription  // Pass the full description
-                                )
-                                journalEntries.add(journalEntry)
-                                journalAdapter.notifyDataSetChanged()
-                            }
-                        }
+                journalEntries = result.map { document ->
+                    JournalEntry(
+                        id = document.id,
+                        title = document.getString("title") ?: "No Title",
+                        shortDescription = "Preview unavailable",
+                        createdAt = document.getLong("created_at").toString(),
+                        tags = document.get("tags") as? List<String> ?: listOf(),
+                        imageUrl = document.getString("image_url"),
+                        fullDescription = document.getString("content") ?: "No content"
+                    )
                 }
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-                Toast.makeText(requireContext(), "Failed to load journals: ${e.message}", Toast.LENGTH_LONG).show()
+    }
+}
+
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
+@Composable
+fun HomeScreen(
+    journalEntries: List<JournalEntry>,
+    onAddJournalClick: () -> Unit,
+    onJournalClick: (JournalEntry) -> Unit
+) {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddJournalClick) {
+                Icon(androidx.compose.material.icons.Icons.Default.Add, contentDescription = "Add Journal")
             }
-    }
-
-    // Function to format timestamp into a human-readable date
-    private fun formatTimestamp(timestamp: Long): String {
-        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())  // Adjust date format as needed
-        val date = Date(timestamp)  // Convert milliseconds to a Date object
-        return sdf.format(date)  // Return formatted date string
-    }
-
-    private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
-        val tags = mutableListOf<String>()
-
-        if (tagIds.isEmpty()) {
-            callback(tags)
-            return
         }
-
-        // Get all tags by their document references
-        firestore.collection("tags")
-            .whereIn(FieldPath.documentId(), tagIds)
-            .get()
-            .addOnSuccessListener { result ->
-                for (document in result) {
-                    val tagName = document.getString("tagName") ?: "Unknown"
-                    tags.add(tagName)
-                }
-                callback(tags)
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            items(journalEntries) { journal ->
+                JournalCard(journalEntry = journal, onClick = { onJournalClick(journal) })
             }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
-                callback(tags) // Return empty tags in case of failure
-            }
+        }
     }
-    private fun getFirst20Words(content: String): String {
-        val words = content.split("\\s+".toRegex()).take(20)  // Ambil hanya 20 kata pertama
-        return words.joinToString(" ") + if (words.size == 20) "..." else ""  // Tambahkan "..." jika ada lebih dari 20 kata
+}
+
+@Composable
+fun JournalCard(
+    journalEntry: JournalEntry,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { onClick() },
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = journalEntry.title,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = journalEntry.shortDescription,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row {
+                journalEntry.tags.forEach { tag ->
+                    Chip(text = tag)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Chip(text: String) {
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .background(Color.Gray, MaterialTheme.shapes.small)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(text = text, color = Color.White, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewHomeScreen() {
+    val sampleJournalEntries = listOf(
+        JournalEntry(
+            id = "1",
+            title = "Sample Journal 1",
+            shortDescription = "This is a short description of sample journal 1.",
+            createdAt = "01.01.2023 12:00",
+            tags = listOf("Tag1", "Tag2"),
+            imageUrl = null,
+            fullDescription = "This is the full description of sample journal 1.",
+        ),
+        JournalEntry(
+            id = "2",
+            title = "Sample Journal 2",
+            shortDescription = "This is a short description of sample journal 2.",
+            createdAt = "02.01.2023 12:00",
+            tags = listOf("Tag3", "Tag4"),
+            imageUrl = null,
+            fullDescription = "This is the full description of sample journal 2.",
+        )
+    )
+
+    MaterialTheme {
+        HomeScreen(
+            journalEntries = sampleJournalEntries,
+            onAddJournalClick = {},
+            onJournalClick = {}
+        )
     }
 }
