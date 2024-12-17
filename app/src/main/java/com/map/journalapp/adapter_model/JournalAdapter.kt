@@ -12,12 +12,16 @@ import com.google.android.material.chip.ChipGroup
 import com.map.journalapp.R
 
 
-// Adapter class for the RecyclerView
+// adapter class for the RecyclerView
 class JournalAdapter(
+    // journal entry that want to show
     private val journalEntries: List<JournalEntry>,
+
+    // callback if the journal item clicked
     private val onJournalClick: (JournalEntry) -> Unit
 ) : RecyclerView.Adapter<JournalAdapter.JournalViewHolder>() {
 
+    // viewholder to connect element with the journal data
     inner class JournalViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val journalTitle: TextView = itemView.findViewById(R.id.journalTitle)
         val journalDescription: TextView = itemView.findViewById(R.id.journalDescription)
@@ -26,20 +30,22 @@ class JournalAdapter(
         val tagChipGroup: ChipGroup = itemView.findViewById(R.id.tagChipGroup)
     }
 
+    // membuat ViewHolder baru dengan layout yang sesuai
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JournalViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.journal_card, parent, false)
         return JournalViewHolder(view)
     }
 
+    // mengikat data jurnal ke tampilan di ViewHolder
     override fun onBindViewHolder(holder: JournalViewHolder, position: Int) {
         val journalEntry = journalEntries[position]
 
+        // menampilkan data jurnal di tampilan
         holder.journalTitle.text = journalEntry.title
-        // Pastikan menggunakan shortDescription untuk ditampilkan di kartu
         holder.journalDescription.text = journalEntry.shortDescription
         holder.journalDate.text = journalEntry.createdAt
 
-        // Check if the journal entry has an image
+        // menampilkan gambar jika tersedia
         if (journalEntry.imageUrl.isNullOrEmpty()) {
             holder.journalImage.visibility = View.GONE
         } else {
@@ -49,21 +55,22 @@ class JournalAdapter(
                 .into(holder.journalImage)
         }
 
-        holder.tagChipGroup.removeAllViews() // clear previous chips
+        // menambahkan tag sebagai chip di ChipGroup
+        holder.tagChipGroup.removeAllViews()
         for (tag in journalEntry.tags) {
             val chip = Chip(holder.itemView.context)
             chip.text = tag
             holder.tagChipGroup.addView(chip)
         }
 
+        // mengatur aksi ketika item diklik
         holder.itemView.setOnClickListener {
             onJournalClick(journalEntry)
         }
     }
 
-    override fun getItemCount(): Int {
-        return journalEntries.size
-    }
+    // mengembalikan jumlah entri jurnal
+    override fun getItemCount(): Int = journalEntries.size
 }
 
 
