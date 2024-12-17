@@ -41,7 +41,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            isShrinkResources = true
+            isShrinkResources = false
             isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -49,6 +49,7 @@ android {
             )
         }
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
