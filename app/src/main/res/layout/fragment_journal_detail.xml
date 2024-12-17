@@ -10,7 +10,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:layout_margin="16dp"> <!-- Padding added to the root layout -->
+        android:layout_margin="16dp">
 
         <!-- Title Input -->
         <TextView
@@ -44,7 +44,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_horizontal"> <!-- Padding added for horizontal spacing -->
+            android:gravity="center_horizontal">
 
             <EditText
                 android:id="@+id/tagInput"
@@ -55,7 +55,7 @@
                 android:background="@drawable/rounded_edittext"
                 android:padding="12dp"
                 android:layout_marginEnd="8dp"
-                android:layout_marginTop="8dp"/> <!-- Removed elevation -->
+                android:layout_marginTop="8dp"/>
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/addTagButton"
@@ -63,10 +63,9 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/rounded_button_grey"
                 android:text="Add Tag"
-                android:layout_margin="6dp"/> <!-- Removed elevation -->
+                android:layout_margin="6dp"/>
         </LinearLayout>
 
-        <!-- ChipGroup to display and select tags -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/tagChipGroup"
             android:layout_width="match_parent"
@@ -107,7 +106,7 @@
                 android:text="Not Allow" />
         </RadioGroup>
 
-        <!-- Location Display -->
+        <!-- Location Display - will be hidden if not allowed -->
         <TextView
             android:id="@+id/locationDisplay"
             android:layout_width="wrap_content"
@@ -117,43 +116,7 @@
             android:layout_gravity="start"
             android:layout_marginBottom="16dp" />
 
-        <!-- Add Image Button -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your Journal Cover"
-            android:textSize="28sp"
-            android:layout_gravity="start"
-            android:layout_marginBottom="8dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="start">
-
-            <!-- Button to select an image -->
-            <ImageButton
-                android:id="@+id/selectImageButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_photo_camera"
-                android:background="@drawable/rounded_image_select"
-                android:contentDescription="Select Image"
-                android:padding="24dp"
-                android:layout_marginBottom="16dp" /> <!-- Removed elevation -->
-
-            <!-- Placeholder for selected image -->
-            <ImageView
-                android:id="@+id/journalCoverImage"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:layout_gravity="center_horizontal"
-                android:background="@drawable/rounded_image_placeholder"
-                android:icon="@drawable/ic_image"
-                android:scaleType="centerCrop"
-                android:layout_marginStart="16dp" />
-        </LinearLayout>
+        <!-- Removed "Your Journal Cover" text, selectImageButton, journalCoverImage -->
 
         <!-- Button to proceed -->
         <androidx.appcompat.widget.AppCompatButton
@@ -164,6 +127,6 @@
             android:text="To the story"
             android:textColor="@android:color/black"
             android:layout_margin="8dp"
-            android:layout_gravity="center_horizontal" /> <!-- Removed elevation -->
+            android:layout_gravity="center_horizontal" />
     </LinearLayout>
 </ScrollView>

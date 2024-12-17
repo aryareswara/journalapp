@@ -11,63 +11,59 @@
         android:padding="16dp"
         android:gravity="center_horizontal">
 
-        <!-- Journal Title -->
         <TextView
             android:id="@+id/journal_title_display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="A Day in My Life in the University"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
-        <!-- Tag Chips (Selected Tags) -->
         <LinearLayout
             android:id="@+id/tag_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-            <!-- Placeholder for dynamically added tags -->
-        </LinearLayout>
+            android:layout_marginBottom="16dp"/>
 
-        <!-- EditText for journal content (where users can write and add images) -->
-        <EditText
-            android:id="@+id/journal_content_input"
+        <!-- Read-only content -->
+        <TextView
+            android:id="@+id/journal_content_display"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:background="@drawable/rounded_edittext"
-            android:gravity="top"
-            android:hint="Write your journal here..."
-            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:textSize="16sp"
             android:minLines="10"
-            android:padding="12dp" />
+            android:layout_weight="1"
+            android:gravity="top"/>
+
+        <ImageView
+            android:id="@+id/chosenImageView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"/>
+
     </LinearLayout>
 
-    <!-- FAB -->
+    <!-- Buttons: Edit and Back -->
     <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_margin="16dp"
         android:layout_gravity="end|bottom">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:src="@drawable/save"
-            android:contentDescription="Save" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btn_delete"
+            android:id="@+id/btn_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:src="@drawable/delete"
-            android:contentDescription="Delete" />
+            android:src="@drawable/ic_add"
+            android:contentDescription="Edit" />
 
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

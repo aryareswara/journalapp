@@ -16,8 +16,9 @@ import com.google.firebase.firestore.FieldPath
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
-import com.map.journalapp.write.FillJournalFragment
-import com.map.journalapp.write.NewNoteFragment
+import com.map.journalapp.write.FillNoteFragment
+import com.map.journalapp.write.JournalDetailFragment
+import com.map.journalapp.write.ViewNoteFragment
 import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -33,7 +34,6 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
-
         val recyclerView: RecyclerView = view.findViewById(R.id.journalRecycle)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
@@ -42,25 +42,29 @@ class HomeFragment : Fragment() {
         }
         recyclerView.adapter = journalAdapter
 
-        loadJournals()
-
         val fab: FloatingActionButton = view.findViewById(R.id.newJournalButton)
         fab.setOnClickListener {
-            val transaction = requireActivity().supportFragmentManager.beginTransaction()
-            transaction.replace(R.id.fragment_container, FillJournalFragment())
-            transaction.addToBackStack(null)
-            transaction.commit()
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, JournalDetailFragment())
+                .addToBackStack(null)
+                .commit()
         }
 
         return view
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadJournals()
+    }
+
     private fun openNoteFragment(journalEntry: JournalEntry) {
-        val newNoteFragment = NewNoteFragment().apply {
+        val newNoteFragment = FillNoteFragment().apply {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)
                 putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
+                putString("image_url", journalEntry.imageUrl)
             }
         }
 
@@ -72,7 +76,7 @@ class HomeFragment : Fragment() {
 
     private fun loadJournals() {
         val user = FirebaseAuth.getInstance().currentUser
-        val userId = user?.uid ?: return  // Ensure the user is authenticated
+        val userId = user?.uid ?: return
 
         firestore.collection("journals")
             .whereEqualTo("userId", userId)
@@ -94,11 +98,10 @@ class HomeFragment : Fragment() {
                         .get()
                         .addOnSuccessListener { noteResult ->
                             var description = "No Notes Available"
-                            var fullDescription = description  // Store full description here
+                            var fullDescription = description
 
                             if (noteResult.documents.isNotEmpty()) {
                                 fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
-                                // Use getFirst20Words for the card display
                                 description = getFirst20Words(fullDescription)
                             }
 
@@ -109,11 +112,11 @@ class HomeFragment : Fragment() {
                                 val journalEntry = JournalEntry(
                                     journalId,
                                     title,
-                                    description,  // Show only 20 words on card
+                                    description,
                                     formattedDate,
                                     tags,
                                     imageUrl,
-                                    fullDescription  // Pass the full description
+                                    fullDescription
                                 )
                                 journalEntries.add(journalEntry)
                                 journalAdapter.notifyDataSetChanged()
@@ -127,22 +130,19 @@ class HomeFragment : Fragment() {
             }
     }
 
-    // Function to format timestamp into a human-readable date
     private fun formatTimestamp(timestamp: Long): String {
-        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())  // Adjust date format as needed
-        val date = Date(timestamp)  // Convert milliseconds to a Date object
-        return sdf.format(date)  // Return formatted date string
+        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+        val date = Date(timestamp)
+        return sdf.format(date)
     }
 
     private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
         val tags = mutableListOf<String>()
-
         if (tagIds.isEmpty()) {
             callback(tags)
             return
         }
 
-        // Get all tags by their document references
         firestore.collection("tags")
             .whereIn(FieldPath.documentId(), tagIds)
             .get()
@@ -155,11 +155,12 @@ class HomeFragment : Fragment() {
             }
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
-                callback(tags) // Return empty tags in case of failure
+                callback(tags)
             }
     }
+
     private fun getFirst20Words(content: String): String {
-        val words = content.split("\\s+".toRegex()).take(20)  // Ambil hanya 20 kata pertama
-        return words.joinToString(" ") + if (words.size == 20) "..." else ""  // Tambahkan "..." jika ada lebih dari 20 kata
+        val words = content.split("\\s+".toRegex()).take(20)
+        return words.joinToString(" ") + if (words.size == 20) "..." else ""
     }
 }
