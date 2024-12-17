@@ -18,172 +18,170 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.map.journalapp.databinding.ActivityMainBinding
 import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.FilterFragment
 import com.map.journalapp.mainActivity.HomeFragment
 import com.map.journalapp.mainActivity.SettingFragment
 
 class MainActivity : AppCompatActivity() {
+    // using binding
+    private lateinit var binding: ActivityMainBinding
 
+    // connect firebase
     private lateinit var auth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
+
+    // some decoration for UI
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
     private lateinit var chipGroupTags: ChipGroup
-    private val firestore: FirebaseFirestore = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
+        // initiliaze firebase
         auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
-        setStatusBarColor()
-
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-
-        drawerLayout = findViewById(R.id.drawer_layout)
-        navigationView = findViewById(R.id.nav_view_top)
-
-        // Find ChipGroup in the header
-        val headerView: View = navigationView.getHeaderView(0)
-        chipGroupTags = headerView.findViewById(R.id.chipGroupTags)
-
-        // Enable the hamburger icon
-        toolbar.setNavigationIcon(R.drawable.ic_menu)
-        toolbar.setNavigationOnClickListener {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START)
-            } else {
-                drawerLayout.openDrawer(GravityCompat.START)
-            }
+        // check user already login or not
+        if (auth.currentUser == null) {
+            redirectToLogin()
+            return
         }
 
-        // Load tags dynamically into the ChipGroup
+        // setting up all UI: toolbar, drawer, etc.
+        setupUI()
+
+        // load tags dynamically into the ChipGroup
         loadTagsIntoChipGroup()
 
-        // Set a listener for the navigation view
-        navigationView.setNavigationItemSelectedListener { menuItem ->
+        // load the HomeFragment when the activity starts
+        if (savedInstanceState == null) {
+            openFragment(HomeFragment())
+        }
+    }
+
+    private fun setupUI() {
+        setStatusBarColor()
+
+        // setup toolbar and hamburger menu
+        val toolbar = binding.toolbar
+        toolbar.setNavigationIcon(R.drawable.ic_menu)
+        toolbar.setNavigationOnClickListener {
+            // open or close drawer
+            toggleDrawer()
+        }
+
+        // setting listener for item in NavigationView
+        val navView = binding.navViewTop
+        navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
+                // if home selected
                 R.id.home -> {
-                    // Navigate to HomeFragment
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, HomeFragment())
-                        .addToBackStack(null)
-                        .commit()
-                    drawerLayout.closeDrawer(GravityCompat.START)
+                    openFragment(HomeFragment())
                     true
                 }
                 else -> false
-            }
+            }.also { binding.drawerLayout.closeDrawer(GravityCompat.START) }
         }
 
-        val profileIcon = findViewById<View>(R.id.setting)
-        profileIcon.setOnClickListener {
-            // Navigate to SettingFragment when the profile icon is clicked
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, SettingFragment())
-                .addToBackStack(null)
-                .commit()
+        // setting onClick Listener
+        binding.setting.setOnClickListener {
+            openFragment(SettingFragment())
         }
 
-
-        // Check if the user is logged in, if not, redirect to the login page
-        if (auth.currentUser == null) {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-        }
-
-        // Load the HomeFragment when the activity starts
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, HomeFragment())
-                .commit()
-        }
-
-
-        val logoutButton = findViewById<View>(R.id.btn_logout) // Create this in your navigation drawer layout
-        logoutButton.setOnClickListener {
+        // logout button
+        binding.btnLogout.setOnClickListener {
             logoutUser()
         }
+    }
 
+    private fun loadTagsIntoChipGroup() {
+        // get the user id
+        val userId = auth.currentUser?.uid ?: return
+
+        // get the ChipGroup reference in NavigationView header
+        val chipGroupTags = binding.navViewTop.getHeaderView(0).findViewById<com.google.android.material.chip.ChipGroup>(R.id.chipGroupTags)
+
+        // get the tags collection from the user
+        firestore.collection("tags")
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { result ->
+                chipGroupTags.removeAllViews()
+                // delete all chip
+                for (document in result) {
+                    val tagId = document.id
+                    val tagName = document.getString("tagName") ?: continue
+
+                    // generate new chip from the user
+                    val chip = Chip(this).apply {
+                        text = tagName
+                        isClickable = true
+                        isCheckable = true
+                        setOnCheckedChangeListener { _, isChecked ->
+                            if (isChecked) onTagSelected(tagId)
+                        }
+                    }
+                    // add chip to ChipGroup
+                    chipGroupTags.addView(chip)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Toast.makeText(this, "Failed to load tags: ${exception.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    // open the fragment if the tag selected
+    private fun onTagSelected(tagId: String) {
+        // transfer data to the fragment
+        val bundle = Bundle().apply { putString("selectedTagId", tagId) }
+        // create FilterFragment
+        val filterFragment = FilterFragment().apply { arguments = bundle }
+        openFragment(filterFragment)
+    }
+
+    // open fragment
+    private fun openFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction()
+            // replace the fragmentContainer
+            .replace(binding.fragmentContainer.id, fragment)
+            // add backstack
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun logoutUser() {
-        FirebaseAuth.getInstance().signOut()
-        val intent = Intent(this, LoginActivity::class.java)
-        startActivity(intent)
-        finish()  // End MainActivity so user can't go back to it
+        auth.signOut()
+        redirectToLogin()
     }
 
+    private fun redirectToLogin() {
+        startActivity(Intent(this, LoginActivity::class.java))
+        finish()
+    }
 
-    private fun loadTagsIntoChipGroup() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid
-
-        if (userId != null) {
-            firestore.collection("tags")
-                .whereEqualTo("userId", userId)  // Query only tags associated with the current user
-                .get()
-                .addOnSuccessListener { result ->
-                    chipGroupTags.removeAllViews()  // Clear any previous chips
-
-                    for (document in result) {
-                        val tagId = document.id  // Get the tag ID
-                        val tagName = document.getString("tagName") ?: continue  // Get tag name
-
-                        // Create a new chip
-                        val chip = Chip(this)
-                        chip.text = tagName
-                        chip.isClickable = true
-                        chip.isCheckable = true
-
-                        // Add the chip to the ChipGroup
-                        chipGroupTags.addView(chip)
-
-                        // Set click listener for each chip to filter journals by tag ID
-                        chip.setOnCheckedChangeListener { _, isChecked ->
-                            if (isChecked) {
-                                // Pass the tag ID to the filter fragment when the chip is checked
-                                onTagSelected(tagId)  // Use tagId here
-                            }
-                        }
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Toast.makeText(this, "Failed to load tags: ${exception.message}", Toast.LENGTH_SHORT).show()
-                }
+    private fun toggleDrawer() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            // close the drawer
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
         } else {
-            Toast.makeText(this, "User not authenticated", Toast.LENGTH_SHORT).show()
+            // open the drawer
+            binding.drawerLayout.openDrawer(GravityCompat.START)
         }
     }
 
-
-    private fun onTagSelected(tagId: String) {
-        // Navigate to FilterFragment with the selected tag ID
-        val bundle = Bundle().apply {
-            putString("selectedTagId", tagId)
-        }
-        val filterFragment = FilterFragment()
-        filterFragment.arguments = bundle
-
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, filterFragment)
-            .addToBackStack(null)
-            .commit()
-
-        // Close drawer after selection
-        drawerLayout.closeDrawer(GravityCompat.START)
-    }
-
-
+    // set color of the status bar
     private fun setStatusBarColor() {
         val color = TypedValue().also { theme.resolveAttribute(R.color.white, it, true) }.data
         window.statusBarColor = color
-        val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.isAppearanceLightStatusBars = !isDarkTheme()
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !isDarkTheme()
     }
 
+    // check is the dark theme active or not
     private fun isDarkTheme(): Boolean {
         return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
