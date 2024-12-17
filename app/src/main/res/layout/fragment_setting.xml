@@ -26,10 +26,8 @@
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/image_person"
             android:background="@drawable/rounded_corner_50"
             android:backgroundTint="@color/primary_background"
-            android:padding="20dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
