@@ -1,15 +1,13 @@
 package com.map.journalapp.write
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.fragment.app.Fragment
 import com.map.journalapp.R
-import com.map.journalapp.databinding.FragmentFillNoteBinding
 import com.map.journalapp.databinding.FragmentViewNoteBinding
 
 class ViewNoteFragment : Fragment() {
@@ -21,7 +19,6 @@ class ViewNoteFragment : Fragment() {
     private var fullDescription: String? = null
     private var imageUrl: String? = null
     private var tags: ArrayList<String>? = null
-    private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentViewNoteBinding.inflate(inflater, container, false)
@@ -50,18 +47,18 @@ class ViewNoteFragment : Fragment() {
         displayTags()
 
         binding.btnEdit.setOnClickListener {
-            // Navigate to EditNoteFragment (similar to FillNoteFragment but for editing)
-            val editFragment = EditNoteFragment().apply {
+            // Navigate to FillNoteFragment for editing
+            val fillNoteFragment = FillNoteFragment().apply {
                 arguments = Bundle().apply {
                     putString("journalId", journalId)
                     putString("journalTitle", journalTitle)
-                    putString("fullDescription", fullDescription)
+                    putString("noteContent", fullDescription)
                     putString("image_url", imageUrl)
-                    putStringArrayList("tags", tags)
+                    putStringArrayList("journalTags", tags)
                 }
             }
             requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, editFragment)
+                .replace(R.id.fragment_container, fillNoteFragment)
                 .addToBackStack(null)
                 .commit()
         }
@@ -84,4 +81,3 @@ class ViewNoteFragment : Fragment() {
         _binding = null
     }
 }
-

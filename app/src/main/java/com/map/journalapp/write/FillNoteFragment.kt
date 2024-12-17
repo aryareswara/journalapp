@@ -1,5 +1,6 @@
 package com.map.journalapp.write
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -40,6 +41,8 @@ class FillNoteFragment : Fragment() {
 
     private val IMAGE_PICK_CODE = 2001
     private val CAMERA_REQUEST_CODE = 2002
+    private val CAMERA_PERMISSION_CODE = 3001
+
     private var chosenImageUri: Uri? = null
     private var photoUri: Uri? = null
 
@@ -65,9 +68,14 @@ class FillNoteFragment : Fragment() {
             binding.journalContentInput.setText(noteContent)
         }
 
+        val existingImageUrl = arguments?.getString("image_url")
+        if (!existingImageUrl.isNullOrEmpty()) {
+            chosenImageUri = Uri.parse(existingImageUrl)
+            displaySelectedImage(chosenImageUri!!)
+        }
+
         displayTags()
 
-        // FAB to choose image source (camera or gallery)
         binding.btnAddImage.setOnClickListener {
             showImageSourceDialog()
         }
@@ -81,8 +89,6 @@ class FillNoteFragment : Fragment() {
         }
     }
 
-    private val CAMERA_PERMISSION_CODE = 3001
-
     private fun showImageSourceDialog() {
         val options = arrayOf("Camera", "Gallery")
         AlertDialog.Builder(requireContext())
@@ -90,11 +96,10 @@ class FillNoteFragment : Fragment() {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> {
-                        // Check camera permission
-                        if (requireContext().checkSelfPermission(android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        if (requireContext().checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                             openCamera()
                         } else {
-                            requestPermissions(arrayOf(android.Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
+                            requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
                         }
                     }
                     1 -> pickImageFromGallery()
@@ -113,34 +118,32 @@ class FillNoteFragment : Fragment() {
         }
     }
 
+    private fun openCamera() {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val imageFileName = "JPEG_$timeStamp.jpg"
+        val storageDir = requireContext().cacheDir
+        val imageFile = File(storageDir, imageFileName)
+        photoUri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", imageFile)
+
+        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+        startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE)
+    }
+
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         startActivityForResult(intent, IMAGE_PICK_CODE)
     }
 
-    private fun openCamera() {
-        // Create a file to store the image
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val imageFileName = "JPEG_$timeStamp.jpg"
-
-        val storageDir = requireContext().cacheDir
-        val imageFile = File(storageDir, imageFileName)
-        photoUri = FileProvider.getUriForFile(
-            requireContext(),
-            requireContext().packageName + ".provider",
-            imageFile
-        )
-
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-        startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE)
-    }
     private fun displaySelectedImage(uri: Uri) {
+        // Ensure ImageView in XML has: android:adjustViewBounds="true"
+        // and no scaleType or scaleType="fitCenter" for better control
+        binding.chosenImageView.adjustViewBounds = true
         Glide.with(this)
             .load(uri)
-            .fitCenter()
-            .override(600, 200)
+            .centerInside()
+            .override(600,200)
             .into(binding.chosenImageView)
         binding.chosenImageView.visibility = View.VISIBLE
     }
@@ -158,7 +161,6 @@ class FillNoteFragment : Fragment() {
             chosenImageUri?.let { displaySelectedImage(it) }
         }
     }
-
 
     private fun displayTags() {
         if (journalTags != null && journalTags!!.isNotEmpty()) {
@@ -178,14 +180,11 @@ class FillNoteFragment : Fragment() {
                         Toast.makeText(requireContext(), "Failed to load tag: $tagId", Toast.LENGTH_SHORT).show()
                     }
             }
-        } else {
-            println("No tags to display")
         }
     }
 
     private fun saveNoteToFirestore() {
         val content = binding.journalContentInput.text.toString()
-
         if (content.isEmpty()) {
             Toast.makeText(requireContext(), "Please write something in the note", Toast.LENGTH_SHORT).show()
             return
@@ -195,23 +194,37 @@ class FillNoteFragment : Fragment() {
             return
         }
 
-        // If user selected an image, upload it first
-        if (chosenImageUri != null) {
+        if (chosenImageUri != null && !chosenImageUri.toString().startsWith("http")) {
             uploadImageToFirebase { imageUrl ->
-                // Once image is uploaded, save the note with the imageUrl
                 saveNoteDocument(content, imageUrl)
+                updateJournalImageUrl(imageUrl)
             }
         } else {
-            // No image selected, just save the note without image
-            saveNoteDocument(content, null)
+            val existingImageUrl = if (chosenImageUri != null && chosenImageUri.toString().startsWith("http")) chosenImageUri.toString() else null
+            saveNoteDocument(content, existingImageUrl)
+            if (!existingImageUrl.isNullOrEmpty()) {
+                updateJournalImageUrl(existingImageUrl)
+            }
         }
+    }
+
+    private fun updateJournalImageUrl(imageUrl: String) {
+        // Update the main journals doc so HomeFragment can display it
+        firestore.collection("journals").document(journalId!!)
+            .update("image_url", imageUrl)
+            .addOnSuccessListener {
+                // updated image_url in main doc
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to update journal image url", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun saveNoteDocument(content: String, imageUrl: String?) {
         val noteData = hashMapOf(
             "content" to content,
             "created_at" to System.currentTimeMillis(),
-            "image_url" to imageUrl // Can be null if no image chosen
+            "image_url" to imageUrl
         )
 
         firestore.collection("journals").document(journalId!!)
@@ -219,11 +232,10 @@ class FillNoteFragment : Fragment() {
             .add(noteData)
             .addOnSuccessListener {
                 Toast.makeText(requireContext(), "Note saved!", Toast.LENGTH_SHORT).show()
-
-                val transaction = requireActivity().supportFragmentManager.beginTransaction()
-                transaction.replace(R.id.fragment_container, HomeFragment())
-                transaction.addToBackStack(null)
-                transaction.commit()
+                requireActivity().supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, HomeFragment())
+                    .addToBackStack(null)
+                    .commit()
             }
             .addOnFailureListener { exception ->
                 exception.printStackTrace()

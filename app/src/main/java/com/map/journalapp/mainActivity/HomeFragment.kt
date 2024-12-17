@@ -4,19 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
-import com.map.journalapp.write.FillNoteFragment
 import com.map.journalapp.write.JournalDetailFragment
 import com.map.journalapp.write.ViewNoteFragment
 import java.sql.Date
@@ -34,11 +32,12 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
+
         val recyclerView: RecyclerView = view.findViewById(R.id.journalRecycle)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
-            openNoteFragment(journalEntry)
+            openViewNoteFragment(journalEntry)
         }
         recyclerView.adapter = journalAdapter
 
@@ -58,20 +57,21 @@ class HomeFragment : Fragment() {
         loadJournals()
     }
 
-    private fun openNoteFragment(journalEntry: JournalEntry) {
-        val newNoteFragment = FillNoteFragment().apply {
+    private fun openViewNoteFragment(journalEntry: JournalEntry) {
+        val viewNoteFragment = ViewNoteFragment().apply {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
+                putString("fullDescription", journalEntry.fullDescription)
                 putString("image_url", journalEntry.imageUrl)
+                putStringArrayList("tags", ArrayList(journalEntry.tags))
             }
         }
 
-        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragment_container, newNoteFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, viewNoteFragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun loadJournals() {
