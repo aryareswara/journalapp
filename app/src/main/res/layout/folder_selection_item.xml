@@ -16,11 +16,10 @@
 
         <!-- Folder Icon -->
         <ImageView
-            android:id="@+id/folderIconImageView"
+            android:id="@+id/folderIconImageViewAddJournal"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_folder"
-            android:tint="@color/primary_icon"
             android:contentDescription="Folder Icon" />
 
         <!-- Spacer -->
@@ -30,7 +29,7 @@
 
         <!-- Folder Name -->
         <TextView
-            android:id="@+id/folderNameTextView"
+            android:id="@+id/folderNameTextViewAddJournal"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Folder Name"

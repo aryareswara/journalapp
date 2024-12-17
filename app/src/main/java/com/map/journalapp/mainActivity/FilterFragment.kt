@@ -15,9 +15,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
-import com.map.journalapp.write.FillNoteFragment
+import com.map.journalapp.write.ViewNoteFragment
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class FilterFragment : Fragment() {
 
@@ -39,7 +40,7 @@ class FilterFragment : Fragment() {
         // Pass the onJournalClick function to the adapter
         journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
             // Call openNoteFragment when a journal is clicked
-            openNoteFragment(journalEntry)
+            openViewNoteFragment(journalEntry)
         }
         recyclerView.adapter = journalAdapter
 
@@ -142,19 +143,21 @@ class FilterFragment : Fragment() {
             }
     }
 
-    private fun openNoteFragment(journalEntry: JournalEntry) {
-        val newNoteFragment = FillNoteFragment().apply {
+    private fun openViewNoteFragment(journalEntry: JournalEntry) {
+        val viewNoteFragment = ViewNoteFragment().apply {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
+                putString("fullDescription", journalEntry.fullDescription)
+                putString("image_url", journalEntry.imageUrl)
+                putStringArrayList("tags", ArrayList(journalEntry.tags))
             }
         }
 
-        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragment_container, newNoteFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, viewNoteFragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun getFirst20Words(content: String): String {

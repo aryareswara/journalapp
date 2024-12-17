@@ -9,5 +9,7 @@
     <string name="user_profile_image" />
     <item name="tagChipGroup" type="id" />
     <item name="journalTitleInput" type="id" />
+    <item name="journalTags" type="id" />
+    <item name="journalCheckbox" type="id" />
     <string-array name="com_google_android_gms_fonts_certs" />
 </resources>

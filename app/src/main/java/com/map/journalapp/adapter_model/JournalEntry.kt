@@ -9,6 +9,7 @@ data class JournalEntry(
     val tags: List<String>,
     val imageUrl: String?,
     // untuk keseluruhan isi
-    val fullDescription: String
+    val fullDescription: String = "",
+    val folderId: String? = null
 )
 
