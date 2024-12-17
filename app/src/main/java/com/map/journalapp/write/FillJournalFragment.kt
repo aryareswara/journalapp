@@ -158,6 +158,7 @@ class FillJournalFragment : Fragment() {
     }
 
     // Handle the result from the image picker
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK) {
@@ -325,6 +326,7 @@ class FillJournalFragment : Fragment() {
     }
 
     // Handle permission result
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
