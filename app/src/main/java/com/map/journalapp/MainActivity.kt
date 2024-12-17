@@ -11,6 +11,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.navigation.NavigationView
@@ -18,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.map.journalapp.adapter_model.FolderAdapter
 import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.FilterFragment
 import com.map.journalapp.mainActivity.HomeFragment
@@ -30,6 +33,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navigationView: NavigationView
     private lateinit var chipGroupTags: ChipGroup
     private val firestore: FirebaseFirestore = Firebase.firestore
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var folderAdapter: FolderAdapter
+    private val folderList = listOf("Folder 1", "Folder 2", "Folder 3")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,7 +107,32 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragment_container, HomeFragment())
                 .commit()
         }
+
+
+        val logoutButton = findViewById<View>(R.id.btn_logout) // Create this in your navigation drawer layout
+        logoutButton.setOnClickListener {
+            logoutUser()
+        }
+
+        recyclerView = findViewById(R.id.folderRecycle)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        folderAdapter = FolderAdapter(folderList) { folderName ->
+            // Handle folder click
+            Toast.makeText(this, "Clicked on $folderName", Toast.LENGTH_SHORT).show()
+        }
+
+        recyclerView.adapter = folderAdapter
+
     }
+
+    private fun logoutUser() {
+        FirebaseAuth.getInstance().signOut()
+        val intent = Intent(this, LoginActivity::class.java)
+        startActivity(intent)
+        finish()  // End MainActivity so user can't go back to it
+    }
+
 
     private fun loadTagsIntoChipGroup() {
         val currentUser = FirebaseAuth.getInstance().currentUser

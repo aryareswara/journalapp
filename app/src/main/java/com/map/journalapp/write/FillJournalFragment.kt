@@ -32,14 +32,16 @@ class FillJournalFragment : Fragment() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocation: String? = null
-    private var imageUri: Uri? = null  // Store the URI of the selected image
+    // store the URI of the selected image
+    private var imageUri: Uri? = null
 
     private val firestore = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance().reference
     private val selectedTagIds = mutableListOf<String>()
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
-    private val IMAGE_PICK_CODE = 1001  // Image picker request code
+    // image picker request code
+    private val IMAGE_PICK_CODE = 1001
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

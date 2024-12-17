@@ -4,19 +4,20 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/primary_background"
     tools:context=".MainActivity"
     tools:openDrawer="start">
 
-    <!-- Main content -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
 
-        <!-- Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
             app:title=" "
             app:titleTextColor="@android:color/black"
             app:navigationIcon="@drawable/ic_menu">
@@ -32,7 +33,6 @@
 
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Fragment -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
@@ -40,30 +40,28 @@
             android:layout_marginTop="?attr/actionBarSize"/>
     </FrameLayout>
 
-    <!-- Navigation Drawer (Merged top and bottom) -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        android:background="@color/primary_background">
 
-        <!-- LinearLayout to divide top and bottom -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- Top Navigation (Menu 1) -->
             <com.google.android.material.navigation.NavigationView
                 android:id="@+id/nav_view_top"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
                 app:headerLayout="@layout/drawer_header"
                 app:menu="@menu/drawer_items"
                 android:layout_weight="1"/>
 
-            <!-- divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="2dp"
@@ -76,22 +74,46 @@
                 android:layout_height="wrap_content"
                 android:text="New Folder"
                 android:drawableStart="@drawable/ic_add"
-                android:drawablePadding="0dp"
-                android:textColor="@android:color/black"
-                android:background="@drawable/rounded_button_grey"
+                android:drawableTint="@color/primary_icon"
+                android:textColor="@color/primary_font"
+                android:background="@drawable/rounded_corner_4"
+                android:backgroundTint="@color/secondary_button"
                 android:layout_marginTop="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginLeft="16dp"
-                android:padding="12dp"
-                android:gravity="center"/>
+                android:padding="12dp"/>
 
-            <!-- Bottom Navigation (Menu 2) -->
             <com.google.android.material.navigation.NavigationView
                 android:id="@+id/nav_view_bottom"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:menu="@menu/drawer_folders"
-                android:layout_weight="1"/>
+                android:background="@android:color/transparent"
+                android:layout_weight="1">
+
+                <!-- Folder RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/folderRecycle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="8dp"
+                    android:nestedScrollingEnabled="true"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+            </com.google.android.material.navigation.NavigationView>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_logout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LOGOUT"
+                android:textColor="@color/secondary_font"
+                android:background="@drawable/rounded_corner_4"
+                android:backgroundTint="@color/primary_button"
+                android:layout_margin="20dp"
+                android:padding="12dp"/>
 
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>

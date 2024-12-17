@@ -4,15 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.FieldPath
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
@@ -60,7 +60,7 @@ class HomeFragment : Fragment() {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)
-                putString("noteContent", journalEntry.fullDescription)
+                putString("noteContent", journalEntry.fullDescription)  // Pass the full note content
             }
         }
 
@@ -76,7 +76,7 @@ class HomeFragment : Fragment() {
 
         firestore.collection("journals")
             .whereEqualTo("userId", userId)
-            .orderBy("created_at", Query.Direction.DESCENDING)
+            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { result ->
                 journalEntries.clear()
@@ -87,19 +87,18 @@ class HomeFragment : Fragment() {
                     val imageUrl = document.getString("image_url")
                     val tagIds = document.get("tags") as? List<String> ?: listOf()
 
-                    // Fetch the most recent note instead of the first created
                     firestore.collection("journals")
                         .document(journalId)
                         .collection("notes")
-                        .orderBy("created_at", Query.Direction.DESCENDING) // Order by latest
                         .limit(1)
                         .get()
                         .addOnSuccessListener { noteResult ->
                             var description = "No Notes Available"
-                            var fullDescription = description
+                            var fullDescription = description  // Store full description here
 
                             if (noteResult.documents.isNotEmpty()) {
                                 fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
+                                // Use getFirst20Words for the card display
                                 description = getFirst20Words(fullDescription)
                             }
 
@@ -110,11 +109,11 @@ class HomeFragment : Fragment() {
                                 val journalEntry = JournalEntry(
                                     journalId,
                                     title,
-                                    description,
+                                    description,  // Show only 20 words on card
                                     formattedDate,
                                     tags,
                                     imageUrl,
-                                    fullDescription
+                                    fullDescription  // Pass the full description
                                 )
                                 journalEntries.add(journalEntry)
                                 journalAdapter.notifyDataSetChanged()
@@ -143,6 +142,7 @@ class HomeFragment : Fragment() {
             return
         }
 
+        // Get all tags by their document references
         firestore.collection("tags")
             .whereIn(FieldPath.documentId(), tagIds)
             .get()
@@ -158,9 +158,8 @@ class HomeFragment : Fragment() {
                 callback(tags) // Return empty tags in case of failure
             }
     }
-
     private fun getFirst20Words(content: String): String {
-        val words = content.split("\\s+".toRegex()).take(20)
-        return words.joinToString(" ") + if (words.size == 20) "..." else ""
+        val words = content.split("\\s+".toRegex()).take(20)  // Ambil hanya 20 kata pertama
+        return words.joinToString(" ") + if (words.size == 20) "..." else ""  // Tambahkan "..." jika ada lebih dari 20 kata
     }
 }

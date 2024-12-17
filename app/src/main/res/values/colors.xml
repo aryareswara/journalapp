@@ -7,4 +7,21 @@
     <color name="pink">#fcfcfd</color>
     <color name="darker_pink">#d7dadf</color>
     <color name="purple_500">#D8A483E5</color>
+
+    <!--Pake yang ini-->
+    <color name="primary_button">#1E1E1E</color>
+    <color name="secondary_button">#E0E0E0</color>
+
+    <color name="primary_font">#2C2C2C</color>"
+    <color name="secondary_font">#F1F1F1</color>
+
+    <color name="primary_icon">#2C2C2C</color>
+    <color name="secondary_icon">#F1F1F1</color>
+
+    <color name="primary_background">#F1F1F1</color>
+    <color name="secondary_background">#FCFCFC</color>"
+
+    <color name="placeholder">#9F9F9F</color>
+
+    <color name="border">#D1D1D1</color>
 </resources>
