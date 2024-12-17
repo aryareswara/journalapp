@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.AppCompatButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/folderButton"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:background="@drawable/rounded_corner_4"
+    android:backgroundTint="@android:color/transparent"
+    android:textColor="@color/primary_font"
+    android:text="Folder Name"
+    android:textAllCaps="false"
+    android:drawableStart="@drawable/ic_folder"
+    android:drawableTint="@color/primary_icon"
+    >
+
+</androidx.appcompat.widget.AppCompatButton>
