@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="bottom"
     android:padding="16dp">
 
+    <!-- User Profile Picture -->
+
     <!-- User Greeting -->
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/userNameTextView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Halo, User"
-        android:textSize="48sp" />
+        android:layout_marginTop="8dp"
+        android:textSize="48sp"
+        android:textColor="@android:color/black"
+        android:text="@string/hello_user"
+        android:layout_gravity="center_horizontal" />
 
     <!-- Divider -->
     <View
@@ -25,7 +32,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="View your journals by tags"
+        android:text="@string/view_your_journals_by_tags"
         android:layout_marginTop="20dp" />
 
     <!-- ChipGroup for filtering tags dynamically -->
@@ -35,4 +42,5 @@
         android:layout_height="wrap_content"
         app:chipSpacing="8dp"
         app:singleSelection="true" />
+
 </LinearLayout>

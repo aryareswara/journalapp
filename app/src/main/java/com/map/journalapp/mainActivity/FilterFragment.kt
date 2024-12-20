@@ -15,7 +15,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
-import com.map.journalapp.write.NewNoteFragment
+import com.map.journalapp.write.FillNoteFragment
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -143,7 +143,7 @@ class FilterFragment : Fragment() {
     }
 
     private fun openNoteFragment(journalEntry: JournalEntry) {
-        val newNoteFragment = NewNoteFragment().apply {
+        val newNoteFragment = FillNoteFragment().apply {
             arguments = Bundle().apply {
                 putString("journalId", journalEntry.id)
                 putString("journalTitle", journalEntry.title)

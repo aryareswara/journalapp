@@ -23,11 +23,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.R
-import com.map.journalapp.databinding.FragmentFillJournalBinding
+import com.map.journalapp.databinding.FragmentJournalDetailBinding
 
-class FillJournalFragment : Fragment() {
+class JournalDetailFragment : Fragment() {
 
-    private var _binding: FragmentFillJournalBinding? = null
+    private var _binding: FragmentJournalDetailBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -47,7 +47,7 @@ class FillJournalFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentFillJournalBinding.inflate(inflater, container, false)
+        _binding = FragmentJournalDetailBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -59,6 +59,18 @@ class FillJournalFragment : Fragment() {
 
         // Load tags from Firestore when the fragment is loaded
         loadTagsFromFirestore()
+
+        binding.locationOptionGroup.setOnCheckedChangeListener { group, checkedId ->
+            if (checkedId == R.id.allowLocationOption) {
+                // If allowed and permission is granted, fetch location
+                fetchLocation()
+                binding.locationDisplay.visibility = View.VISIBLE
+            } else {
+                // Not allowed
+                userLocation = null
+                binding.locationDisplay.visibility = View.GONE
+            }
+        }
 
         // Handle the "Allow" option for Journal Written Location
         binding.allowLocationOption.setOnClickListener {
@@ -77,10 +89,6 @@ class FillJournalFragment : Fragment() {
             }
         }
 
-        // Handle image selection
-        binding.selectImageButton.setOnClickListener {
-            openImagePicker()
-        }
 
         // Button to save journal and redirect to NewNoteFragment
         binding.btnToStory.setOnClickListener {
@@ -158,12 +166,9 @@ class FillJournalFragment : Fragment() {
     }
 
     // Handle the result from the image picker
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK) {
-            imageUri = data?.data  // Save the URI of the selected image
-            binding.journalCoverImage.setImageURI(imageUri)  // Update the ImageView
-        }
     }
 
     // Upload the selected image to Firebase Storage
@@ -310,7 +315,7 @@ class FillJournalFragment : Fragment() {
 
     // Navigate to NewNoteFragment after saving the journal
     private fun navigateToNewNoteFragment(journalId: String, title: String) {
-        val newNoteFragment = NewNoteFragment().apply {
+        val newNoteFragment = FillNoteFragment().apply {
             arguments = Bundle().apply {
                 putString("journalId", journalId)
                 putString("journalTitle", title)
@@ -325,6 +330,7 @@ class FillJournalFragment : Fragment() {
     }
 
     // Handle permission result
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
