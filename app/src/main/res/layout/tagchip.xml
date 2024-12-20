@@ -6,10 +6,7 @@
     android:text="Tag"
     android:checkable="true"
     android:clickable="true"
-    android:paddingStart="10dp"
-    android:paddingEnd="10dp"
-    android:layout_margin="4dp"
     app:chipIconVisible="false"
     app:closeIconEnabled="false"
-    app:chipBackgroundColor="?attr/colorPrimary"
-    android:textColor="?attr/colorOnPrimary" />
+    app:chipBackgroundColor="@color/primary_button"
+    android:textColor="@color/secondary_font" />
