@@ -6,18 +6,18 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Folder Header -->
+    <!-- Folder Header / Tag Header -->
     <TextView
-        android:id="@+id/folderHeaderTextView"
+        android:id="@+id/tagHeaderTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Folder Name"
+        android:text="Tags Name: "
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/primary_font"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp" />
 
-    <!-- RecyclerView to display filtered journals -->
+    <!-- RecyclerView for filtered journals -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/filteredJournalRecycle"
         android:layout_width="match_parent"

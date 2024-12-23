@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragmentEachFolder"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Folder Name displayed here -->
+        <TextView
+            android:id="@+id/textViewFolderName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_margin="8dp"
+            android:text="(Folder Name)"/>
+
+        <!-- RecyclerView to list journals in that folder -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerEachFolder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</FrameLayout>

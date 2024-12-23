@@ -2,19 +2,20 @@ package com.map.journalapp.write
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.net.Uri
-import java.util.Locale
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -23,7 +24,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.map.journalapp.R
+import com.map.journalapp.adapter_model.Folder
 import com.map.journalapp.databinding.FragmentJournalDetailBinding
+import java.util.Locale
 
 class JournalDetailFragment : Fragment() {
 
@@ -32,16 +35,20 @@ class JournalDetailFragment : Fragment() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocation: String? = null
-    // store the URI of the selected image
     private var imageUri: Uri? = null
 
     private val firestore = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance().reference
+    private val storageRef = FirebaseStorage.getInstance().reference
     private val selectedTagIds = mutableListOf<String>()
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
-    // image picker request code
     private val IMAGE_PICK_CODE = 1001
+
+    // Folder picking
+    private lateinit var folderSpinner: Spinner
+    private val folderList = mutableListOf<Folder>()
+    private val folderNames = mutableListOf<String>()
+    private var selectedFolderId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,72 +58,79 @@ class JournalDetailFragment : Fragment() {
         return binding.root
     }
 
+    @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
-        // Load tags from Firestore when the fragment is loaded
-        loadTagsFromFirestore()
-
-        binding.locationOptionGroup.setOnCheckedChangeListener { group, checkedId ->
-            if (checkedId == R.id.allowLocationOption) {
-                // If allowed and permission is granted, fetch location
-                fetchLocation()
-                binding.locationDisplay.visibility = View.VISIBLE
-            } else {
-                // Not allowed
-                userLocation = null
-                binding.locationDisplay.visibility = View.GONE
-            }
-        }
-
-        // Handle the "Allow" option for Journal Written Location
         binding.allowLocationOption.setOnClickListener {
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
             ) {
-                // Request location permission
                 ActivityCompat.requestPermissions(
                     requireActivity(),
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                     LOCATION_PERMISSION_REQUEST_CODE
                 )
             } else {
-                // Fetch the location if permission is granted
                 fetchLocation()
             }
         }
 
-
-        // Button to save journal and redirect to NewNoteFragment
-        binding.btnToStory.setOnClickListener {
-            saveJournalToFirestoreAndRedirect()
-        }
-
-        // Add a new tag when the Add Tag button is clicked
+        loadTagsFromFirestore()
         binding.addTagButton.setOnClickListener {
             val newTag = binding.tagInput.text.toString().trim()
             if (newTag.isNotEmpty()) {
                 saveTagToFirestore(newTag)
                 binding.tagInput.text.clear()
-            } else {
-                Toast.makeText(requireContext(), "Enter a valid tag", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        // Folder spinner
+        folderSpinner = binding.spinnerFolders
+        loadUserFolders { folders ->
+            folderList.clear()
+            folderList.addAll(folders)
+
+            folderNames.clear()
+            folderNames.addAll(folders.map { it.fileName })
+
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, folderNames)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            folderSpinner.adapter = adapter
+
+            folderSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    selectedFolderId = null
+                }
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    selectedFolderId = folderList[position].id
+                }
+            }
+        }
+
+        binding.locationOptionGroup.setOnCheckedChangeListener { _, checkedId ->
+            if (checkedId == R.id.allowLocationOption) {
+                binding.locationDisplay.visibility = View.VISIBLE
+            } else {
+                userLocation = null
+                binding.locationDisplay.visibility = View.GONE
+            }
+        }
+
+        binding.btnToStory.setOnClickListener {
+            saveJournalToFirestoreAndRedirect()
         }
     }
 
-    // Request location from the Fused Location Provider
-    // Function to fetch and display user location as a readable address
+    // LOCATION
     @SuppressLint("SetTextI18n")
     private fun fetchLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
         ) {
-            // Request location permissions if not granted
             ActivityCompat.requestPermissions(
                 requireActivity(),
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -124,30 +138,17 @@ class JournalDetailFragment : Fragment() {
             )
             return
         }
-
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location ->
                 if (location != null) {
                     val lat = location.latitude
                     val lon = location.longitude
-
-                    // Use Geocoder to get address from lat and lon
                     val geocoder = Geocoder(requireContext(), Locale.getDefault())
-                    try {
-                        val addresses = geocoder.getFromLocation(lat, lon, 1)
-                        if (addresses != null) {
-                            if (addresses.isNotEmpty()) {
-                                val address = addresses[0].getAddressLine(0)
-                                binding.locationDisplay.text = address  // Display address
-                                userLocation = address  // Store address in userLocation
-                            } else {
-                                binding.locationDisplay.text = "Address not found"
-                                userLocation = "Unknown Location"
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        Toast.makeText(requireContext(), "Error fetching address", Toast.LENGTH_SHORT).show()
+                    val addresses = geocoder.getFromLocation(lat, lon, 1)
+                    if (!addresses.isNullOrEmpty()) {
+                        val address = addresses[0].getAddressLine(0)
+                        binding.locationDisplay.text = address
+                        userLocation = address
                     }
                 } else {
                     Toast.makeText(requireContext(), "Location not available", Toast.LENGTH_SHORT).show()
@@ -158,63 +159,40 @@ class JournalDetailFragment : Fragment() {
             }
     }
 
-    // Open image picker to select an image
-    private fun openImagePicker() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        startActivityForResult(intent, IMAGE_PICK_CODE)
-    }
-
-    // Handle the result from the image picker
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
-    // Upload the selected image to Firebase Storage
-    private fun uploadImageToFirebase(onSuccess: (String) -> Unit) {
-        val storageRef = storage.child("journal_covers/${System.currentTimeMillis()}.jpg")
-        imageUri?.let { uri ->
-            storageRef.putFile(uri)
-                .addOnSuccessListener {
-                    storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                        onSuccess(downloadUrl.toString())  // Return the download URL
-                    }
+    // FOLDERS
+    private fun loadUserFolders(callback: (List<Folder>) -> Unit) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        firestore.collection("folders")
+            .whereEqualTo("user_id", userId)  // match your doc fields
+            .get()
+            .addOnSuccessListener { snap ->
+                val result = snap.documents.mapNotNull { doc ->
+                    doc.toObject(Folder::class.java)?.copy(id = doc.id)
                 }
-                .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show()
-                }
-        }
+                callback(result)
+            }
+            .addOnFailureListener {
+                callback(emptyList())
+            }
     }
 
-    // Load tags from Firestore that belong to the current user
+    // TAGS
     private fun loadTagsFromFirestore() {
-        val user = FirebaseAuth.getInstance().currentUser
-        val userId = user?.uid ?: return  // Ensure the user is authenticated
-
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         firestore.collection("tags")
-            .whereEqualTo("userId", userId)  // Fetch tags only for the current user
+            .whereEqualTo("userId", userId)
             .get()
             .addOnSuccessListener { result ->
                 for (document in result) {
                     val tagId = document.id
                     val tagName = document.getString("tagName") ?: continue
 
-                    // Dynamically add chips for each tag from the database
                     val chip = Chip(requireContext())
                     chip.text = tagName
                     chip.isCheckable = true
-
-                    // Add or remove tag ID from selectedTagIds when the chip is checked/unchecked
                     chip.setOnCheckedChangeListener { _, isChecked ->
-                        if (isChecked) {
-                            selectedTagIds.add(tagId)  // Add the tag ID
-                        } else {
-                            selectedTagIds.remove(tagId)  // Remove the tag ID
-                        }
+                        if (isChecked) selectedTagIds.add(tagId) else selectedTagIds.remove(tagId)
                     }
-
-                    // Add chip to the ChipGroup
                     binding.tagChipGroup.addView(chip)
                 }
             }
@@ -223,40 +201,24 @@ class JournalDetailFragment : Fragment() {
             }
     }
 
-
-    // Save a new tag to the tags collection in Firestore
     private fun saveTagToFirestore(newTag: String) {
-        val user = FirebaseAuth.getInstance().currentUser
-        val userId = user?.uid ?: return  // Ensure the user is authenticated
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val userId = user.uid
 
-        val tagData = hashMapOf(
-            "tagName" to newTag,
-            "userId" to userId  // Bind the tag to the current user
-        )
-
+        val tagData = mapOf("tagName" to newTag, "userId" to userId)
         firestore.collection("tags")
             .add(tagData)
-            .addOnSuccessListener { documentReference ->
-                val tagId = documentReference.id
-                selectedTagIds.add(tagId)  // Add the tag ID to selectedTagIds
-                Toast.makeText(requireContext(), "Tag added: $newTag", Toast.LENGTH_SHORT).show()
+            .addOnSuccessListener { docRef ->
+                val tagId = docRef.id
+                selectedTagIds.add(tagId)
 
-                // Dynamically create a chip for the new tag
                 val chip = Chip(requireContext())
                 chip.text = newTag
                 chip.isCheckable = true
                 chip.isChecked = true
-
-                // Add or remove tag ID when the chip is checked/unchecked
                 chip.setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked) {
-                        selectedTagIds.add(tagId)
-                    } else {
-                        selectedTagIds.remove(tagId)
-                    }
+                    if (isChecked) selectedTagIds.add(tagId) else selectedTagIds.remove(tagId)
                 }
-
-                // Add the new chip to the ChipGroup
                 binding.tagChipGroup.addView(chip)
             }
             .addOnFailureListener {
@@ -264,90 +226,64 @@ class JournalDetailFragment : Fragment() {
             }
     }
 
-    // Function to save the journal and its tags to Firestore
+    // CREATE JOURNAL
     private fun saveJournalToFirestoreAndRedirect() {
         val title = binding.journalTitleInput.text.toString().trim()
-
         if (title.isEmpty()) {
             Toast.makeText(requireContext(), "Please enter a title", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // If an image is selected, upload it to Firebase Storage
-        if (imageUri != null) {
-            uploadImageToFirebase { imageUrl ->
-                // Once the image is uploaded and we have the download URL, save the journal
-                saveJournalToFirestore(title, imageUrl)
-            }
-        } else {
-            // If no image is selected, save the journal without an image
-            saveJournalToFirestore(title, null)
-        }
-    }
-
-    private fun saveJournalToFirestore(title: String, imageUrl: String?) {
-        // Get the current user's UID
-        val user = FirebaseAuth.getInstance().currentUser
-        val userId = user?.uid ?: return  // Ensure the user is authenticated
-
-        // Prepare the journal data
-        val journalData = hashMapOf(
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val data = hashMapOf(
             "title" to title,
-            "created_at" to System.currentTimeMillis(),  // Save current timestamp
-            "tags" to selectedTagIds,  // Save selected tag IDs
-            "location" to userLocation,  // Save the fetched user location
-            "image_url" to imageUrl,  // Save the image URL if available
-            "userId" to userId  // Bind the journal to the user's UID
+            "created_at" to System.currentTimeMillis(),
+            "tags" to selectedTagIds,
+            "location" to userLocation,
+            "userId" to userId
         )
+        selectedFolderId?.let { data["folder_id"] = it }
 
-        // Save journal to Firestore
         firestore.collection("journals")
-            .add(journalData)
-            .addOnSuccessListener { documentReference ->
-                val journalId = documentReference.id
-                navigateToNewNoteFragment(journalId, title)
+            .add(data)
+            .addOnSuccessListener { docRef ->
+                Toast.makeText(requireContext(), "Journal created!", Toast.LENGTH_SHORT).show()
+                // e.g. navigate to FillNoteFragment or back to Home
             }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to save journal", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
-
-    // Navigate to NewNoteFragment after saving the journal
-    private fun navigateToNewNoteFragment(journalId: String, title: String) {
-        val newNoteFragment = FillNoteFragment().apply {
-            arguments = Bundle().apply {
-                putString("journalId", journalId)
-                putString("journalTitle", title)
-                putStringArrayList("journalTags", ArrayList(selectedTagIds))  // Pass the selected tag IDs
-            }
-        }
-
-        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragment_container, newNoteFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
+    // optional image picking
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        startActivityForResult(intent, IMAGE_PICK_CODE)
     }
 
-    // Handle permission result
     @Deprecated("Deprecated in Java")
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // Permission granted
-                Log.d("LOCATION_FETCH", "Location permission granted")
-                fetchLocation() // Fetch location now
-            } else {
-                Log.w("LOCATION_FETCH", "Location permission denied")
-                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // handle images if needed
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    // PERMISSIONS
+    @Deprecated("Deprecated in Java")
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                fetchLocation()
+            } else {
+                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

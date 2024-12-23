@@ -64,6 +64,7 @@ class HomeFragment : Fragment() {
                 putString("journalTitle", journalEntry.title)
                 putString("fullDescription", journalEntry.fullDescription)
                 putString("image_url", journalEntry.imageUrl)
+                // Pass the tag list as an ArrayList
                 putStringArrayList("tags", ArrayList(journalEntry.tags))
             }
         }
@@ -78,6 +79,7 @@ class HomeFragment : Fragment() {
         val user = FirebaseAuth.getInstance().currentUser
         val userId = user?.uid ?: return
 
+        // Suppose in Firestore your user field is "userId" and your timestamp is "created_at"
         firestore.collection("journals")
             .whereEqualTo("userId", userId)
             .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
@@ -89,7 +91,8 @@ class HomeFragment : Fragment() {
                     val journalId = document.id
                     val title = document.getString("title") ?: "No Title"
                     val imageUrl = document.getString("image_url")
-                    val tagIds = document.get("tags") as? List<String> ?: listOf()
+                    // Our array of tag IDs from Firestore
+                    val tagIds = document.get("tags") as? List<String> ?: emptyList()
 
                     firestore.collection("journals")
                         .document(journalId)
@@ -108,15 +111,16 @@ class HomeFragment : Fragment() {
                             val timestamp = document.getLong("created_at") ?: 0L
                             val formattedDate = formatTimestamp(timestamp)
 
-                            fetchTags(tagIds) { tags ->
+                            // Convert the tagIds into actual tag strings from "tags" collection
+                            fetchTags(tagIds) { tagNames ->
                                 val journalEntry = JournalEntry(
-                                    journalId,
-                                    title,
-                                    description,
-                                    formattedDate,
-                                    tags,
-                                    imageUrl,
-                                    fullDescription
+                                    id = journalId,
+                                    title = title,
+                                    shortDescription = description,
+                                    createdAt = formattedDate,
+                                    tags = tagNames,  // <-- pass as real list
+                                    imageUrl = imageUrl,
+                                    fullDescription = fullDescription
                                 )
                                 journalEntries.add(journalEntry)
                                 journalAdapter.notifyDataSetChanged()
@@ -136,10 +140,12 @@ class HomeFragment : Fragment() {
         return sdf.format(date)
     }
 
+    /**
+     * Convert the list of tag document IDs -> list of tagName strings
+     */
     private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
-        val tags = mutableListOf<String>()
         if (tagIds.isEmpty()) {
-            callback(tags)
+            callback(emptyList())
             return
         }
 
@@ -147,6 +153,7 @@ class HomeFragment : Fragment() {
             .whereIn(FieldPath.documentId(), tagIds)
             .get()
             .addOnSuccessListener { result ->
+                val tags = mutableListOf<String>()
                 for (document in result) {
                     val tagName = document.getString("tagName") ?: "Unknown"
                     tags.add(tagName)
@@ -155,7 +162,7 @@ class HomeFragment : Fragment() {
             }
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
-                callback(tags)
+                callback(emptyList())
             }
     }
 

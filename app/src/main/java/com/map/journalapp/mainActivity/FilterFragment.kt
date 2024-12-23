@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,18 +38,14 @@ class FilterFragment : Fragment() {
         val recyclerView: RecyclerView = view.findViewById(R.id.filteredJournalRecycle)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Pass the onJournalClick function to the adapter
         journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
-            // Call openNoteFragment when a journal is clicked
             openViewNoteFragment(journalEntry)
         }
         recyclerView.adapter = journalAdapter
 
-        // Get the selected tag ID from arguments
         val selectedTagId = arguments?.getString("selectedTagId")
-        Log.d("FilterFragment", "Selected Tag ID: $selectedTagId")  // Log to verify the selected tag ID
+        Log.d("FilterFragment", "Selected Tag ID: $selectedTagId")
 
-        // Load journals based on the selected tag ID
         if (selectedTagId != null) {
             loadJournalsByTagId(selectedTagId)
         } else {
@@ -60,37 +57,37 @@ class FilterFragment : Fragment() {
 
     private fun loadJournalsByTagId(tagId: String) {
         val user = FirebaseAuth.getInstance().currentUser
-        val userId = user?.uid ?: return  // Ensure the user is authenticated
+        val userId = user?.uid ?: return
 
-        Log.d("FilterFragment", "Current User ID: $userId, Loading journals for tag ID: $tagId")
-
-        // Fetch the tag name based on the tagId
+        // First, fetch the name of the tag from Firestore
         firestore.collection("tags").document(tagId).get()
             .addOnSuccessListener { documentSnapshot ->
                 val tagName = documentSnapshot.getString("tagName")
-
                 if (tagName != null) {
-                    // Query journals where the tag ID is included in the 'tags' array in journals
+                    // Show which tag is chosen
+                    val tagHeaderTextView = view?.findViewById<TextView>(R.id.tagHeaderTextView)
+                    tagHeaderTextView?.text = "Tags Name: $tagName"
+
+                    // Query journals where 'tags' array contains this tagId
                     firestore.collection("journals")
-                        .whereEqualTo("userId", userId)  // Only retrieve journals for the authenticated user
-                        .whereArrayContains("tags", tagId)  // Match the tag ID
+                        .whereEqualTo("userId", userId)
+                        .whereArrayContains("tags", tagId)
                         .get()
                         .addOnSuccessListener { result ->
-                            journalEntries.clear()  // Clear current entries
-
+                            journalEntries.clear()
                             if (result.isEmpty) {
                                 Log.d("FilterFragment", "No journals found for tag: $tagName")
-                                Toast.makeText(requireContext(), "No journals found for tag: $tagName", Toast.LENGTH_SHORT).show()
-                                return@addOnSuccessListener  // Early return to avoid further processing
+                                Toast.makeText(requireContext(),
+                                    "No journals found for tag: $tagName",
+                                    Toast.LENGTH_SHORT).show()
+                                return@addOnSuccessListener
                             }
-
                             for (document in result) {
                                 val journalId = document.id
                                 val title = document.getString("title") ?: "No Title"
                                 val imageUrl = document.getString("image_url")
-                                val tagIds = document.get("tags") as? List<String> ?: listOf()
+                                val tagIds = document.get("tags") as? List<String> ?: emptyList()
 
-                                // Fetch the first note for the journal
                                 firestore.collection("journals")
                                     .document(journalId)
                                     .collection("notes")
@@ -98,31 +95,29 @@ class FilterFragment : Fragment() {
                                     .get()
                                     .addOnSuccessListener { noteResult ->
                                         var description = "No Notes Available"
-                                        var fullDescription = description  // Store full description here
+                                        var fullDescription = description
 
                                         if (noteResult.documents.isNotEmpty()) {
-                                            fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
-                                            // Use getFirst20Words for the card display
+                                            fullDescription = noteResult.documents[0]
+                                                .getString("content") ?: "No Notes Available"
                                             description = getFirst20Words(fullDescription)
                                         }
 
                                         val timestamp = document.getLong("created_at") ?: 0L
                                         val formattedDate = formatTimestamp(timestamp)
 
-                                        // Fetch tag names based on the tag IDs in the journal
-                                        fetchTags(tagIds) { tags ->
+                                        // Convert the tagIds (doc-level) -> list of real tag names
+                                        fetchTags(tagIds) { realTagNames ->
                                             val journalEntry = JournalEntry(
                                                 id = journalId,
                                                 title = title,
-                                                shortDescription = description,  // Show only 20 words on card
+                                                shortDescription = description,
                                                 createdAt = formattedDate,
-                                                tags = tags,  // Translated tag names
+                                                tags = realTagNames,   // store list
                                                 imageUrl = imageUrl,
-                                                fullDescription = fullDescription  // Store the full description
+                                                fullDescription = fullDescription
                                             )
                                             journalEntries.add(journalEntry)
-
-                                            Log.d("FilterFragment", "Added journal entry: $title")
                                             journalAdapter.notifyDataSetChanged()
                                         }
                                     }
@@ -130,7 +125,9 @@ class FilterFragment : Fragment() {
                         }
                         .addOnFailureListener { exception ->
                             Log.e("FilterFragment", "Error loading journals: ${exception.message}")
-                            Toast.makeText(requireContext(), "Failed to load journals: ${exception.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(),
+                                "Failed to load journals: ${exception.message}",
+                                Toast.LENGTH_SHORT).show()
                         }
                 } else {
                     Log.e("FilterFragment", "Tag not found for ID: $tagId")
@@ -139,7 +136,9 @@ class FilterFragment : Fragment() {
             }
             .addOnFailureListener { exception ->
                 Log.e("FilterFragment", "Error loading tag name: ${exception.message}")
-                Toast.makeText(requireContext(), "Failed to load tag name: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(),
+                    "Failed to load tag name: ${exception.message}",
+                    Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -150,6 +149,7 @@ class FilterFragment : Fragment() {
                 putString("journalTitle", journalEntry.title)
                 putString("fullDescription", journalEntry.fullDescription)
                 putString("image_url", journalEntry.imageUrl)
+                // Pass the tag list
                 putStringArrayList("tags", ArrayList(journalEntry.tags))
             }
         }
@@ -161,33 +161,24 @@ class FilterFragment : Fragment() {
     }
 
     private fun getFirst20Words(content: String): String {
-        val words = content.split("\\s+".toRegex()).take(20)  // Take only the first 20 words
-        return words.joinToString(" ") + if (words.size == 20) "..." else ""  // Add "..." if there are more than 20 words
+        val words = content.split("\\s+".toRegex()).take(20)
+        return words.joinToString(" ") + if (words.size == 20) "..." else ""
     }
 
-    // Fetch tag names from Firestore based on tag IDs
     private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
-        val tags = mutableListOf<String>()
-
         if (tagIds.isEmpty()) {
-            callback(tags)
+            callback(emptyList())
             return
         }
-
-        // Fetch the tag names by their document references
         firestore.collection("tags")
             .whereIn(FieldPath.documentId(), tagIds)
             .get()
             .addOnSuccessListener { result ->
-                for (document in result) {
-                    val tagName = document.getString("tagName") ?: "Unknown"
-                    tags.add(tagName)
-                }
-                callback(tags)
+                val tagNames = result.documents.map { it.getString("tagName") ?: "Unknown" }
+                callback(tagNames)
             }
             .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
-                callback(tags) // Return empty tags in case of failure
+                callback(emptyList())
             }
     }
 

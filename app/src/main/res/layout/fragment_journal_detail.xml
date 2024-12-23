@@ -7,7 +7,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:layout_margin="16dp">
@@ -66,16 +66,17 @@
                 android:layout_margin="6dp"/>
         </LinearLayout>
 
+        <!-- ChipGroup for dynamic tags -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/tagChipGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
             app:chipSpacing="8dp"
-            app:singleSelection="false" />
+            app:singleSelection="false"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
 
-        <!-- Location Allow/Not Allow -->
+        <!-- Location selection (Allow / Not Allow) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -106,7 +107,7 @@
                 android:text="Not Allow" />
         </RadioGroup>
 
-        <!-- Location Display - will be hidden if not allowed -->
+        <!-- If “Allow” is chosen => display location text -->
         <TextView
             android:id="@+id/locationDisplay"
             android:layout_width="wrap_content"
@@ -114,9 +115,25 @@
             android:text="Location will appear here if allowed"
             android:textSize="14sp"
             android:layout_gravity="start"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:visibility="visible"/>
 
-        <!-- Removed "Your Journal Cover" text, selectImageButton, journalCoverImage -->
+        <!-- Folder Spinner for picking a folder -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose Folder"
+            android:textSize="28sp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="16dp" />
+
+        <Spinner
+            android:id="@+id/spinnerFolders"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:spinnerMode="dropdown" />
 
         <!-- Button to proceed -->
         <androidx.appcompat.widget.AppCompatButton
@@ -128,5 +145,6 @@
             android:textColor="@android:color/black"
             android:layout_margin="8dp"
             android:layout_gravity="center_horizontal" />
+
     </LinearLayout>
 </ScrollView>

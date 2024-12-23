@@ -1,4 +1,6 @@
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
@@ -22,6 +24,7 @@
             app:titleTextColor="@android:color/black"
             app:navigationIcon="@drawable/ic_menu">
 
+            <!-- Profile (Settings) icon on the right -->
             <ImageButton
                 android:id="@+id/setting"
                 android:layout_width="wrap_content"
@@ -31,6 +34,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/profile"
                 tools:ignore="TouchTargetSizeCheck" />
+
         </androidx.appcompat.widget.Toolbar>
 
         <androidx.fragment.app.FragmentContainerView
@@ -53,7 +57,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- Top NavigationView with Header -->
+            <!-- Top NavigationView with Header (for tags, user greeting) -->
             <com.google.android.material.navigation.NavigationView
                 android:id="@+id/nav_view_top"
                 android:layout_width="match_parent"
@@ -70,37 +74,29 @@
                 android:layout_marginRight="16dp"
                 android:layout_marginLeft="16dp" />
 
-            <!-- New Folder Button -->
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btn_new_folder"
+            <!-- Horizontal container for New Folder button ONLY now -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="New Folder"
-                android:drawableStart="@drawable/ic_add"
-                android:drawableTint="@color/primary_icon"
-                android:textColor="@color/primary_font"
-                android:background="@drawable/rounded_corner_4"
-                android:backgroundTint="@color/secondary_button"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
                 android:layout_marginTop="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginLeft="16dp"
-                android:padding="12dp"/>
+                android:gravity="center_vertical">
 
-            <!-- Add Journal to Folder Button -->
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btn_add_journal_to_folder"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Add Journal to Folder"
-                android:drawableStart="@drawable/ic_add"
-                android:drawableTint="@color/primary_icon"
-                android:textColor="@color/primary_font"
-                android:background="@drawable/rounded_corner_4"
-                android:backgroundTint="@color/secondary_button"
-                android:layout_marginTop="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginLeft="16dp"
-                android:padding="12dp"/>
+                <!-- New Folder Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btn_new_folder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="New Folder"
+                    android:drawableStart="@drawable/ic_add"
+                    android:drawableTint="@color/primary_icon"
+                    android:textColor="@color/primary_font"
+                    android:background="@drawable/rounded_corner_4"
+                    android:backgroundTint="@color/secondary_button"
+                    android:padding="12dp"/>
+            </LinearLayout>
 
             <!-- Bottom NavigationView with Folder RecyclerView -->
             <com.google.android.material.navigation.NavigationView
@@ -130,7 +126,6 @@
                 android:backgroundTint="@color/primary_button"
                 android:layout_margin="20dp"
                 android:padding="12dp"/>
-
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 
