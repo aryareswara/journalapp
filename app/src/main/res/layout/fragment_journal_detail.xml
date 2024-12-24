@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/primary_background"
     android:scrollbars="none">
 
     <LinearLayout
@@ -10,13 +11,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:layout_margin="16dp">
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
 
         <!-- Title Input -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Write your title"
+            android:textColor="@color/primary_font"
             android:textSize="36sp"
             android:layout_gravity="start"
             android:layout_marginBottom="8dp" />
@@ -26,19 +29,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Your title here..."
-            android:background="@drawable/rounded_edittext"
+            android:background="@drawable/background_journal_card"
             android:padding="12dp"
             android:layout_marginBottom="16dp"
             android:layout_marginTop="8dp" />
+
 
         <!-- Tag Input and Add Button -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add Tags"
+            android:text="Tags"
             android:textSize="28sp"
-            android:layout_gravity="start"
-            android:layout_marginBottom="8dp" />
+            android:textColor="@color/primary_font"
+            android:layout_gravity="start" />
+
+
+        <!-- ChipGroup for dynamic tags -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/tagChipGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacing="8dp"
+            app:singleSelection="false"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -51,8 +66,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Enter tag"
-                android:background="@drawable/rounded_edittext"
+                android:hint="New tag here..."
+                android:background="@drawable/background_journal_card"
                 android:padding="12dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginTop="8dp"/>
@@ -61,50 +76,54 @@
                 android:id="@+id/addTagButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rounded_button_grey"
+                android:background="@drawable/rounded_corner_4"
+                android:backgroundTint="@color/secondary_button"
                 android:text="Add Tag"
-                android:layout_margin="6dp"/>
+                android:textColor="@color/primary_font"
+                android:layout_margin="8dp"/>
         </LinearLayout>
-
-        <!-- ChipGroup for dynamic tags -->
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/tagChipGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:chipSpacing="8dp"
-            app:singleSelection="false"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"/>
 
         <!-- Location selection (Allow / Not Allow) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Journal Written Location"
+            android:text="Journal Location"
             android:textSize="28sp"
+            android:textColor="@color/primary_font"
             android:layout_gravity="start"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="16dp" />
 
         <RadioGroup
             android:id="@+id/locationOptionGroup"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_gravity="start"
             android:layout_marginBottom="16dp">
 
             <RadioButton
                 android:id="@+id/allowLocationOption"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Allow" />
+                android:layout_weight="1"
+                android:layout_marginRight="8dp"
+                android:gravity="center"
+                android:button="@android:color/transparent"
+                android:background="@drawable/radio_selector"
+                android:textColor="@drawable/radio_text_color"
+                android:text="Show" />
 
             <RadioButton
                 android:id="@+id/notAllowLocationOption"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Not Allow" />
+                android:layout_weight="1"
+                android:layout_marginLeft="8dp"
+                android:gravity="center"
+                android:button="@android:color/transparent"
+                android:background="@drawable/radio_selector"
+                android:textColor="@drawable/radio_text_color"
+                android:text="Don't Show" />
         </RadioGroup>
 
         <!-- If “Allow” is chosen => display location text -->
@@ -112,8 +131,9 @@
             android:id="@+id/locationDisplay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Location will appear here if allowed"
+            android:text="Your location is here!"
             android:textSize="14sp"
+            android:textColor="@color/primary_font"
             android:layout_gravity="start"
             android:layout_marginBottom="16dp"
             android:visibility="visible"/>
@@ -123,6 +143,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Choose Folder"
+            android:textColor="@color/primary_font"
             android:textSize="28sp"
             android:layout_gravity="start"
             android:layout_marginBottom="8dp"
@@ -140,9 +161,10 @@
             android:id="@+id/btnToStory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rounded_button_dark_grey"
-            android:text="To the story"
-            android:textColor="@android:color/black"
+            android:background="@drawable/rounded_corner_4"
+            android:backgroundTint="@color/primary_button"
+            android:text="Write Journal"
+            android:textColor="@color/secondary_font"
             android:layout_margin="8dp"
             android:layout_gravity="center_horizontal" />
 

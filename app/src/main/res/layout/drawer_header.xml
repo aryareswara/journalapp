@@ -17,21 +17,22 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textSize="48sp"
-        android:textColor="@android:color/black"
+        android:textColor="@color/primary_font"
         android:text="@string/hello_user"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="start" />
 
     <!-- Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
-        android:background="@android:color/darker_gray"
+        android:background="@color/border"
         android:layout_marginTop="20dp" />
 
     <!-- Title for Tag Selection -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/primary_font"
         android:text="@string/view_your_journals_by_tags"
         android:layout_marginTop="20dp" />
 

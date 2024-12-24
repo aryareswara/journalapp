@@ -13,6 +13,7 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -87,8 +88,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Status Bar color
-        setStatusBarColor()
 
         // Toolbar
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -142,21 +141,16 @@ class MainActivity : AppCompatActivity() {
         // Load tags -> ChipGroup
         loadTagsIntoChipGroup()
 
-        // NavigationView Top -> item selections
-        navigationViewTop.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.home -> {
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, HomeFragment())
-                        .addToBackStack(null)
-                        .commit()
-                    drawerLayout.closeDrawer(GravityCompat.START)
-                    true
-                }
-                // If you had timeline, it'd go here. Right now only “home” is listed.
-                else -> false
-            }
+        // Home button
+        val homeButton: AppCompatButton = findViewById(R.id.home)
+        homeButton.setOnClickListener {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HomeFragment())
+                .addToBackStack(null)
+                .commit()
+            drawerLayout.closeDrawer(GravityCompat.START)
         }
+
 
         // If no saved instance, load HomeFragment
         if (savedInstanceState == null) {
@@ -176,6 +170,8 @@ class MainActivity : AppCompatActivity() {
         newFolderButton.setOnClickListener {
             showCreateFolderDialog()
         }
+
+        setStatusBarIconColor()
 
         // Load user data (profile, user name)
         loadUserData()
@@ -399,18 +395,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Set the status bar color (light or dark theme)
+     * Set the status bar icon color to @color/primary_font based on theme.
      */
-    private fun setStatusBarColor() {
-        val color = TypedValue().also { theme.resolveAttribute(R.color.white, it, true) }.data
-        window.statusBarColor = color
+    private fun setStatusBarIconColor() {
+        // Use the WindowInsetsControllerCompat to control the appearance of status bar icons.
         val controller = WindowInsetsControllerCompat(window, window.decorView)
+
+        // Check if the current theme is dark or light, and set icon color accordingly.
         controller.isAppearanceLightStatusBars = !isDarkTheme()
+
+        // If you need to set the status bar icons to a custom color, you can use a combination of systemUiVisibility
+        // and ensure that the text or icons use the primary font color for light or dark themes.
+        if (isDarkTheme()) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        } else {
+            window.decorView.systemUiVisibility = 0 // Reset to default if necessary
+        }
     }
 
+    /**
+     * Check if the current theme is dark.
+     */
     private fun isDarkTheme(): Boolean {
         return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
+
 
     /**
      * Hash a password with SHA-256

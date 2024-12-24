@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -63,6 +63,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:src="@drawable/save"
+            app:tint="@color/primary_icon"
+            android:backgroundTint="@color/secondary_button"
             android:contentDescription="Save" />
 
         <!-- New FAB to add image - placed between delete and save -->
@@ -72,6 +74,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:src="@drawable/gallery"
+            app:tint="@color/primary_icon"
+            android:backgroundTint="@color/secondary_button"
             android:contentDescription="Add Image" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -80,6 +84,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:src="@drawable/delete"
+            app:tint="@color/primary_icon"
+            android:backgroundTint="@color/secondary_button"
             android:contentDescription="Delete" />
 
     </LinearLayout>

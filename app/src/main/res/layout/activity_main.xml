@@ -20,6 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@android:color/transparent"
+            app:tint="@color/primary_icon"
             app:title=" "
             app:titleTextColor="@android:color/black"
             app:navigationIcon="@drawable/ic_menu">
@@ -33,6 +34,7 @@
                 android:layout_marginRight="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/profile"
+                app:tint="@color/primary_icon"
                 tools:ignore="TouchTargetSizeCheck" />
 
         </androidx.appcompat.widget.Toolbar>
@@ -65,12 +67,36 @@
                 android:background="@android:color/transparent"
                 app:headerLayout="@layout/drawer_header"
                 app:menu="@menu/drawer_items"
-                android:layout_weight="1"/>
+                android:layout_weight="0.5"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/home"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Home"
+                    android:drawableStart="@drawable/ic_home"
+                    android:drawableTint="@color/primary_icon"
+                    android:textColor="@color/primary_font"
+                    android:background="@drawable/rounded_corner_4"
+                    android:backgroundTint="@color/secondary_button"
+                    android:padding="12dp"/>
+
+            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="2dp"
-                android:background="@android:color/darker_gray"
+                android:background="@color/border"
+                android:layout_marginTop="16dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginLeft="16dp" />
 
@@ -104,16 +130,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@android:color/transparent">
+                android:background="@android:color/transparent"
+                android:fitsSystemWindows="true">
 
                 <!-- Folder RecyclerView -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/folderRecycle"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp" />
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="0dp"
+                    android:clipToPadding="false"
+                    android:paddingTop="8dp" />
 
             </com.google.android.material.navigation.NavigationView>
+
 
             <!-- Logout Button -->
             <androidx.appcompat.widget.AppCompatButton
