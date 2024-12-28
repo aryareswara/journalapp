@@ -11,11 +11,15 @@
     android:background="@color/primary_background"
     tools:context=".logreg.RegisterActivity">
 
-    <ImageView
-        android:layout_height="120dp"
-        android:layout_width="120dp"
-        android:layout_marginBottom="48dp"
-        android:src="@drawable/ic_image"/>
+    <com.google.android.material.imageview.ShapeableImageView
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginBottom="16dp"
+        android:padding="5dp"
+        android:src="@mipmap/ic_launcher_round"
+        app:shapeAppearanceOverlay="@style/RoundedCornerImage"
+        app:strokeWidth="2dp"
+        app:strokeColor="@color/primary_icon"/>
 
     <TextView
         android:layout_width="wrap_content"
