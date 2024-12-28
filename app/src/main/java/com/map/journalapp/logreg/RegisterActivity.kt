@@ -1,9 +1,12 @@
 package com.map.journalapp.logreg
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowInsetsControllerCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.databinding.ActivityRegisterBinding
@@ -34,6 +37,8 @@ class RegisterActivity : AppCompatActivity() {
         binding.loginLink.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
         }
+
+        setStatusBarIconColor()
     }
 
     private fun registerUser() {
@@ -75,5 +80,25 @@ class RegisterActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun setStatusBarIconColor() {
+        // Use the WindowInsetsControllerCompat to control the appearance of status bar icons.
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+
+        // Check if the current theme is dark or light, and set icon color accordingly.
+        controller.isAppearanceLightStatusBars = !isDarkTheme()
+
+        // If you need to set the status bar icons to a custom color, you can use a combination of systemUiVisibility
+        // and ensure that the text or icons use the primary font color for light or dark themes.
+        if (isDarkTheme()) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        } else {
+            window.decorView.systemUiVisibility = 0 // Reset to default if necessary
+        }
+    }
+
+    private fun isDarkTheme(): Boolean {
+        return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 }

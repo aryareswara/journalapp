@@ -34,7 +34,6 @@
                 android:layout_marginRight="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/profile"
-                app:tint="@color/primary_icon"
                 tools:ignore="TouchTargetSizeCheck" />
 
         </androidx.appcompat.widget.Toolbar>

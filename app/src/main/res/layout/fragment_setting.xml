@@ -27,7 +27,6 @@
             android:layout_height="150dp"
             android:background="@drawable/rounded_corner_50"
             android:backgroundTint="@color/primary_background"
-            app:tint="@color/primary_icon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
