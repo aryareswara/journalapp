@@ -1,5 +1,7 @@
+// com.map.journalapp.adapter_model.FolderAdapter.kt
 package com.map.journalapp.adapter_model
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,9 +10,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.map.journalapp.R
 
-/**
- * Adapter for folder list in a RecyclerView (e.g. in the side drawer).
- */
 class FolderAdapter(
     private var folders: List<Folder>,
     private val onFolderClick: (Folder) -> Unit
@@ -44,8 +43,10 @@ class FolderAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val folder = folders[position]
         holder.folderName.text = folder.fileName
-        // Could set an icon if you like
         holder.folderIcon.setImageResource(R.drawable.ic_folder)
+
+        // Log folder name for debugging
+        Log.d("FOLDER_ADAPTER", "Binding folder: '${folder.fileName}'")
     }
 
     override fun getItemCount(): Int = folders.size

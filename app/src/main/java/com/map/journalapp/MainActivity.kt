@@ -4,7 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.TypedValue
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -192,8 +192,13 @@ class MainActivity : AppCompatActivity() {
      * Fetch folders from Firestore, using "user_id" field
      */
     private fun fetchFolders() {
-        val userId = auth.currentUser?.uid ?: return
-        // IMPORTANT: Ensure your Firestore docs actually store "user_id" (not "userId")
+        val userId = auth.currentUser?.uid
+        if (userId.isNullOrEmpty()) {
+            Log.e("FOLDER_LOADING", "User ID is null or empty.")
+            folderAdapter.updateFolders(folderList)
+            return
+        }
+
         firestore.collection("folders")
             .whereEqualTo("user_id", userId)
             .orderBy("created_at", Query.Direction.DESCENDING)
@@ -203,17 +208,18 @@ class MainActivity : AppCompatActivity() {
                 if (result.isEmpty) {
                     // No folders => update adapter with empty list
                     folderAdapter.updateFolders(folderList)
+                    Log.d("FOLDER_LOADING", "No folders found for user.")
                     return@addOnSuccessListener
                 }
                 for (doc in result) {
                     val folderId = doc.id
-                    val fileName = doc.getString("file_name") ?: "Untitled Folder"
+                    val fileName = doc.getString("file_name")?.takeIf { it.isNotBlank() } ?: "Untitled Folder"
                     val createdAt = doc.getTimestamp("created_at") ?: Timestamp.now()
                     val userIdDoc = doc.getString("user_id") ?: userId
                     val isPasswordProtected = doc.getBoolean("isPasswordProtected") ?: false
                     val password = doc.getString("password")
 
-                    // Construct folder model
+                    // Construct folder model manually
                     val folder = Folder(
                         id = folderId,
                         fileName = fileName,
@@ -225,11 +231,17 @@ class MainActivity : AppCompatActivity() {
                     folderList.add(folder)
                 }
                 folderAdapter.updateFolders(folderList)
+                Log.d("FOLDER_LOADING", "Folders loaded: ${folderList.size}")
+                folderList.forEach { folder ->
+                    Log.d("FOLDER_LOADING", "Folder: '${folder.fileName}'")
+                }
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Failed to load folders: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("FOLDER_LOADING", "Failed to load folders: ${e.message}")
             }
     }
+
 
     /**
      * Dialog to create a new folder

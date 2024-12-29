@@ -129,16 +129,15 @@
         <!-- If “Allow” is chosen => display location text -->
         <TextView
             android:id="@+id/locationDisplay"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your location is here!"
+            android:text="Location will appear here if allowed"
             android:textSize="14sp"
-            android:textColor="@color/primary_font"
-            android:layout_gravity="start"
+            android:textColor="@android:color/black"
             android:layout_marginBottom="16dp"
-            android:visibility="visible"/>
+            android:visibility="gone"/> <!-- Initially hidden -->
 
-        <!-- Folder Spinner for picking a folder -->
+        <!-- Folder Selection -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -149,12 +148,27 @@
             android:layout_marginBottom="8dp"
             android:layout_marginTop="16dp" />
 
-        <Spinner
-            android:id="@+id/spinnerFolders"
+        <!-- Folder Selection Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/selectFolderButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:spinnerMode="dropdown" />
+            android:background="@drawable/rounded_corner_4"
+            android:backgroundTint="@color/secondary_button"
+            android:text="Select Folder"
+            android:textColor="@color/primary_font"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Selected Folder Display -->
+        <TextView
+            android:id="@+id/selectedFolderTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No folder selected"
+            android:textSize="16sp"
+            android:textColor="@color/primary_font"
+            android:layout_marginBottom="16dp" />
+
 
         <!-- Button to proceed -->
         <androidx.appcompat.widget.AppCompatButton
