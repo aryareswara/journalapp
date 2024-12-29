@@ -410,7 +410,7 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
         }
 
         firestore.collection("tags")
-            .whereEqualTo("userId", userId) // If your tags store "userId" instead of "user_id"
+            .whereEqualTo("userId", userId)
             .get()
             .addOnSuccessListener { result ->
                 chipGroupTags.removeAllViews()
@@ -418,7 +418,8 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                     val tagId = document.id
                     val tagName = document.getString("tagName") ?: continue
 
-                    val chip = Chip(this)
+                    // Inflate the custom Chip layout (tagchip.xml)
+                    val chip = layoutInflater.inflate(R.layout.tagchip, chipGroupTags, false) as Chip
                     chip.text = tagName
                     chip.isClickable = true
                     chip.isCheckable = true
@@ -436,6 +437,7 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                 Toast.makeText(this, "Failed to load tags: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
 
     /**
      * Called when a tag chip is selected
