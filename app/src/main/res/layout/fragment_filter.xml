@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:text="Tags Name: "
         android:textSize="20sp"
+        android:fontFamily="@font/playfair_regular"
         android:textStyle="bold"
         android:textColor="@color/primary_font"
         android:layout_marginBottom="16dp" />

@@ -27,6 +27,7 @@
         android:text="Register"
         android:textSize="32sp"
         android:textColor="@color/primary_font"
+        android:fontFamily="@font/playfair_regular"
         android:textStyle="bold"
         android:layout_gravity="center"
         android:layout_marginTop="16dp" />
@@ -46,6 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
+            android:fontFamily="@font/playfair_regular"
             android:hint="Name" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -64,6 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
+            android:fontFamily="@font/playfair_regular"
             android:hint="Email" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -82,6 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
+            android:fontFamily="@font/playfair_regular"
             android:hint="Password" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -92,6 +96,7 @@
         android:layout_marginTop="16dp"
         android:text="Sign Up"
         android:textColor="@color/secondary_font"
+        android:fontFamily="@font/playfair_regular"
         android:textStyle="bold"
         android:background="@drawable/rounded_corner_4"
         android:backgroundTint="@color/primary_button"
@@ -105,15 +110,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Already have an account?"
+            android:fontFamily="@font/playfair_regular"
             android:layout_marginEnd="4dp"/>
 
         <TextView
             android:id="@+id/login_link"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/holo_red_dark"
-            android:text="Login here"
+            android:layout_height="20dp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:text="Login here"
+            android:fontFamily="@font/playfair_regular"
+            android:textColor="@android:color/holo_red_dark" />
     </LinearLayout>
 </LinearLayout>

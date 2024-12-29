@@ -9,6 +9,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="16dp"
+        android:background="@color/primary_background"
         android:gravity="center_horizontal">
 
         <TextView
@@ -16,6 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="A Day in My Life in the University"
+            android:fontFamily="@font/playfair_regular"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -33,6 +35,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:background="@drawable/rounded_edittext"
+            android:fontFamily="@font/playfair_regular"
             android:gravity="top"
             android:hint="Write your journal here..."
             android:inputType="textMultiLine"

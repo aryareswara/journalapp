@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:background="@color/primary_background"
     android:padding="16dp">
 
     <TextView
@@ -12,6 +13,7 @@
         android:text="Select a Folder"
         android:textSize="20sp"
         android:textColor="@color/primary_font"
+        android:fontFamily="@font/playfair_regular"
         android:layout_gravity="center_horizontal"
         android:paddingBottom="8dp" />
 

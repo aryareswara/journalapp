@@ -4,4 +4,10 @@
         <item name="cornerSize">70dp</item>
     </style>
 
+    <style name="AlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@color/primary_background</item>
+        <item name="android:fontFamily">@font/playfair_regular</item>
+    </style>
+
+
 </resources>

@@ -38,6 +38,7 @@
             android:text="Folder Name"
             android:textSize="16sp"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             android:layout_weight="1" />
     </LinearLayout>
 

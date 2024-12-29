@@ -41,6 +41,7 @@
             android:text="Your Name"
             android:textSize="50sp"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/img_profile_picture" />
@@ -69,6 +70,8 @@
         android:background="@drawable/rounded_corner_4"
         android:backgroundTint="@color/primary_button"
         android:textColor="@color/secondary_font"
+        android:fontFamily="@font/playfair_regular"
+        android:textStyle="bold"
         android:text="Edit"
         android:layout_marginBottom="40dp"
         app:layout_constraintBottom_toBottomOf="parent"/>

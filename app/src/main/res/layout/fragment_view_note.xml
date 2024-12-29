@@ -16,6 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="22sp"
+            android:fontFamily="@font/playfair_regular"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
@@ -33,6 +34,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/rounded_edittext"
             android:padding="12dp"
+            android:fontFamily="@font/playfair_regular"
             android:textSize="16sp"
             android:minLines="10"
             android:layout_weight="1"

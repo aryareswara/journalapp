@@ -20,6 +20,7 @@
             android:layout_height="wrap_content"
             android:text="Write your title"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             android:textSize="36sp"
             android:layout_gravity="start"
             android:layout_marginBottom="8dp" />
@@ -30,6 +31,7 @@
             android:layout_height="wrap_content"
             android:hint="Your title here..."
             android:background="@drawable/background_journal_card"
+            android:fontFamily="@font/playfair_regular"
             android:padding="12dp"
             android:layout_marginBottom="16dp"
             android:layout_marginTop="8dp" />
@@ -42,6 +44,7 @@
             android:text="Tags"
             android:textSize="28sp"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             android:layout_gravity="start" />
 
 
@@ -68,6 +71,7 @@
                 android:layout_weight="1"
                 android:hint="New tag here..."
                 android:background="@drawable/background_journal_card"
+                android:fontFamily="@font/playfair_regular"
                 android:padding="12dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginTop="8dp"/>
@@ -80,6 +84,8 @@
                 android:backgroundTint="@color/secondary_button"
                 android:text="Add Tag"
                 android:textColor="@color/primary_font"
+                android:fontFamily="@font/playfair_regular"
+                android:textStyle="bold"
                 android:layout_margin="8dp"/>
         </LinearLayout>
 
@@ -90,6 +96,7 @@
             android:text="Journal Location"
             android:textSize="28sp"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             android:layout_gravity="start"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="16dp" />
@@ -111,6 +118,8 @@
                 android:button="@android:color/transparent"
                 android:background="@drawable/radio_selector"
                 android:textColor="@drawable/radio_text_color"
+                android:fontFamily="@font/playfair_regular"
+                android:textStyle="bold"
                 android:text="Show" />
 
             <RadioButton
@@ -123,6 +132,8 @@
                 android:button="@android:color/transparent"
                 android:background="@drawable/radio_selector"
                 android:textColor="@drawable/radio_text_color"
+                android:fontFamily="@font/playfair_regular"
+                android:textStyle="bold"
                 android:text="Don't Show" />
         </RadioGroup>
 
@@ -143,6 +154,7 @@
             android:layout_height="wrap_content"
             android:text="Choose Folder"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             android:textSize="28sp"
             android:layout_gravity="start"
             android:layout_marginBottom="8dp"
@@ -157,6 +169,8 @@
             android:backgroundTint="@color/secondary_button"
             android:text="Select Folder"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
+            android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
         <!-- Selected Folder Display -->
@@ -167,6 +181,7 @@
             android:text="No folder selected"
             android:textSize="16sp"
             android:textColor="@color/primary_font"
+            android:fontFamily="@font/playfair_regular"
             android:layout_marginBottom="16dp" />
 
 
@@ -179,6 +194,8 @@
             android:backgroundTint="@color/primary_button"
             android:text="Write Journal"
             android:textColor="@color/secondary_font"
+            android:fontFamily="@font/playfair_regular"
+            android:textStyle="bold"
             android:layout_margin="8dp"
             android:layout_gravity="center_horizontal" />
 

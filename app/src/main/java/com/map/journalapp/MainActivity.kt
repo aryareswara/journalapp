@@ -3,6 +3,7 @@ package com.map.journalapp
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -15,6 +16,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -247,7 +249,7 @@ class MainActivity : AppCompatActivity() {
      * Dialog to create a new folder
      */
     private fun showCreateFolderDialog() {
-        val builder = AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this, R.style.AlertDialog)
         builder.setTitle("Create New Folder")
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_create_folder, null)
@@ -257,31 +259,64 @@ class MainActivity : AppCompatActivity() {
         val passwordToggle: Switch = dialogView.findViewById(R.id.switchPassword)
         val passwordEditText: EditText = dialogView.findViewById(R.id.editTextPassword)
 
+        // Initially hide the password input
         passwordEditText.visibility = View.GONE
 
         passwordToggle.setOnCheckedChangeListener { _, isChecked ->
             passwordEditText.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
-        builder.setPositiveButton("Create") { dialog, _ ->
-            val folderName = folderNameEditText.text.toString().trim()
-            val isPasswordProtected = passwordToggle.isChecked
-            val password = if (isPasswordProtected) passwordEditText.text.toString() else null
+        // Add buttons to the dialog
+        builder.setPositiveButton("Create", null) // Null so we can customize later
+        builder.setNegativeButton("Cancel", null)
 
-            if (folderName.isEmpty()) {
-                Toast.makeText(this, "Folder name cannot be empty", Toast.LENGTH_SHORT).show()
-            } else if (isPasswordProtected && password.isNullOrEmpty()) {
-                Toast.makeText(this, "Password cannot be empty", Toast.LENGTH_SHORT).show()
-            } else {
-                createFolder(folderName, isPasswordProtected, password)
+        val alertDialog = builder.create()
+
+        alertDialog.setOnShowListener {
+            // Access dialog buttons after it's shown
+            val positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            val negativeButton = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+            // Style the positive button
+            positiveButton.setTextColor(ContextCompat.getColor(this, R.color.primary_font))
+
+            // Style the negative button
+            negativeButton.setTextColor(ContextCompat.getColor(this, R.color.primary_font))
+
+            // Handle positive button click
+            positiveButton.setOnClickListener {
+                val folderName = folderNameEditText.text.toString().trim()
+                val isPasswordProtected = passwordToggle.isChecked
+                val password = if (isPasswordProtected) passwordEditText.text.toString() else null
+
+                // Validation
+                when {
+                    folderName.isEmpty() -> {
+                        folderNameEditText.error = "Folder name cannot be empty"
+                        folderNameEditText.requestFocus()
+                    }
+                    isPasswordProtected && password.isNullOrEmpty() -> {
+                        passwordEditText.error = "Password cannot be empty"
+                        passwordEditText.requestFocus()
+                    }
+                    else -> {
+                        // Create the folder and dismiss the dialog
+                        createFolder(folderName, isPasswordProtected, password)
+                        alertDialog.dismiss()
+                    }
+                }
             }
-            dialog.dismiss()
+
+            // Handle negative button click
+            negativeButton.setOnClickListener {
+                alertDialog.dismiss()
+            }
         }
-        builder.setNegativeButton("Cancel") { dialog, _ ->
-            dialog.cancel()
-        }
-        builder.show()
+
+        alertDialog.show()
     }
+
+
 
     /**
      * Actually create the folder doc in Firestore

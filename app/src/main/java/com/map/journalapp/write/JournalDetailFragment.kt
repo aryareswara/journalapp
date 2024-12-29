@@ -331,11 +331,9 @@ class JournalDetailFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         // Initialize AlertDialog.Builder
-        val builder = AlertDialog.Builder(requireContext())
+        val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialog)
             .setView(dialogView)
-            .setNegativeButton("Cancel") { dialogInterface, _ ->
-                dialogInterface.dismiss()
-            }
+            .setNegativeButton("Cancel", null) // Set null for customization later
 
         // Create the AlertDialog
         val dialog = builder.create()
@@ -349,9 +347,16 @@ class JournalDetailFragment : Fragment() {
         }
         recyclerView.adapter = adapter
 
+        // Customize buttons after dialog is shown
+        dialog.setOnShowListener {
+            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            negativeButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_font))
+        }
+
         // Show the dialog
         dialog.show()
     }
+
 
 
     // CREATE JOURNAL

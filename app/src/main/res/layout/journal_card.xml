@@ -21,6 +21,7 @@
             android:layout_height="wrap_content"
             android:text="Ini Journal"
             android:textSize="18sp"
+            android:fontFamily="@font/playfair_regular"
             android:textStyle="bold"
             android:textColor="@color/primary_font" />
 
@@ -30,6 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/lorem"
+            android:fontFamily="@font/playfair_regular"
             android:textSize="14sp"
             android:paddingTop="8dp"
             android:textColor="@color/primary_font" />
@@ -58,6 +60,7 @@
                 android:layout_weight="1"
                 android:layout_gravity="start"
                 android:text="01.01.2024"
+                android:fontFamily="@font/playfair_regular"
                 android:textSize="12sp"
                 android:textColor="@color/primary_font" />
 

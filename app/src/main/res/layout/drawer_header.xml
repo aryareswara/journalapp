@@ -18,6 +18,7 @@
         android:layout_marginTop="8dp"
         android:textSize="48sp"
         android:textColor="@color/primary_font"
+        android:fontFamily="@font/playfair_regular"
         android:text="@string/hello_user"
         android:layout_gravity="start" />
 
@@ -33,6 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/primary_font"
+        android:fontFamily="@font/playfair_regular"
         android:text="@string/view_your_journals_by_tags"
         android:layout_marginTop="20dp" />
 

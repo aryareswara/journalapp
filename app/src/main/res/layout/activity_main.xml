@@ -85,6 +85,8 @@
                     android:drawableStart="@drawable/ic_home"
                     android:drawableTint="@color/primary_icon"
                     android:textColor="@color/primary_font"
+                    android:fontFamily="@font/playfair_regular"
+                    android:textStyle="bold"
                     android:background="@drawable/rounded_corner_4"
                     android:backgroundTint="@color/secondary_button"
                     android:padding="12dp"/>
@@ -118,6 +120,8 @@
                     android:drawableStart="@drawable/ic_add"
                     android:drawableTint="@color/primary_icon"
                     android:textColor="@color/primary_font"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/playfair_regular"
                     android:background="@drawable/rounded_corner_4"
                     android:backgroundTint="@color/secondary_button"
                     android:padding="12dp"/>
@@ -151,6 +155,8 @@
                 android:layout_height="wrap_content"
                 android:text="LOGOUT"
                 android:textColor="@color/secondary_font"
+                android:fontFamily="@font/playfair_regular"
+                android:textStyle="bold"
                 android:background="@drawable/rounded_corner_4"
                 android:backgroundTint="@color/primary_button"
                 android:layout_margin="20dp"
