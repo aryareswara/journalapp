@@ -4,9 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
-import androidx.fragment.app.Fragment
 import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentViewNoteBinding
 
@@ -26,6 +26,8 @@ class ViewNoteFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         journalId = arguments?.getString("journalId")
         journalTitle = arguments?.getString("journalTitle")
         fullDescription = arguments?.getString("fullDescription")
@@ -35,13 +37,10 @@ class ViewNoteFragment : Fragment() {
         binding.journalTitleDisplay.text = journalTitle
         binding.journalContentDisplay.text = fullDescription
 
-        if (!imageUrl.isNullOrEmpty()) {
-            binding.chosenImageView.visibility = View.VISIBLE
-            Glide.with(this)
-                .load(imageUrl)
-                .fitCenter()
-                .override(600, 200)
-                .into(binding.chosenImageView)
+        imageUrl?.let {
+            if (it.isNotEmpty()) {
+                displaySelectedImage(it)
+            }
         }
 
         displayTags()
@@ -62,7 +61,18 @@ class ViewNoteFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }
+    }
 
+    private fun displaySelectedImage(image: Any) {
+        // Ensure ImageView in XML has: android:adjustViewBounds="true"
+        // and no scaleType or scaleType="fitCenter" for better control
+        binding.chosenImageView.adjustViewBounds = true
+        Glide.with(this)
+            .load(image)
+            .centerInside()
+            .override(600, 200)
+            .into(binding.chosenImageView)
+        binding.chosenImageView.visibility = View.VISIBLE
     }
 
     private fun displayTags() {

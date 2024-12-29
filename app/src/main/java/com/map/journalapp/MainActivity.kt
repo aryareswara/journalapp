@@ -1,9 +1,9 @@
+// File: MainActivity.kt
 package com.map.journalapp
 
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.navigation.NavigationView
@@ -40,11 +41,15 @@ import com.map.journalapp.logreg.LoginActivity
 import com.map.journalapp.mainActivity.FilterFragment
 import com.map.journalapp.mainActivity.HomeFragment
 import com.map.journalapp.mainActivity.SettingFragment
+import com.map.journalapp.mainActivity.SettingFragment.OnProfileImageUpdatedListener
 import com.map.journalapp.write.EachFolderFragment
 import java.security.MessageDigest
 import com.map.journalapp.adapter_model.Folder as FolderModel
 
-class MainActivity : AppCompatActivity() {
+/**
+ * The main activity of the application, handling navigation and user interactions.
+ */
+class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Implement the interface
 
     // 1) Firebase Auth
     private lateinit var auth: FirebaseAuth
@@ -347,17 +352,18 @@ class MainActivity : AppCompatActivity() {
     /**
      * Load user data (profile pic, name) from Firestore
      */
-    private fun loadUserData() {
+    fun loadUserData() {
         val userId = auth.currentUser?.uid ?: return
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val profilePictureUrl = document.getString("profilePicture")
                     if (!profilePictureUrl.isNullOrEmpty()) {
-                        // IMPORTANT: check if activity is finishing before calling Glide
-                        if (!isFinishing) {
+                        if (!isFinishing) { // Valid check for Activity
                             Glide.with(this)
                                 .load(profilePictureUrl)
+                                .diskCacheStrategy(DiskCacheStrategy.NONE) // Bypass disk cache
+                                .skipMemoryCache(true) // Bypass memory cache
                                 .circleCrop()
                                 .placeholder(R.drawable.person)
                                 .error(R.drawable.person)
@@ -374,6 +380,14 @@ class MainActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Failed to load user data: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    /**
+     * Implements the interface method to handle profile image updates.
+     * Refreshes the user data by reloading it from Firestore.
+     */
+    override fun onProfileImageUpdated() {
+        loadUserData() // Refresh the user data to display the updated profile image
     }
 
     /**
