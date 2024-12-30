@@ -9,5 +9,16 @@
         <item name="android:fontFamily">@font/playfair_regular</item>
     </style>
 
+    <style name="ChipStyle" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipBackgroundColor">@color/chip_background_color</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="android:fontFamily">@font/playfair_regular</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="TextChip" parent="TextAppearance.MaterialComponents.Chip">
+        <item name="android:fontFamily">@font/playfair_regular</item>
+        <item name="android:textSize">14sp</item>
+    </style>
 
 </resources>

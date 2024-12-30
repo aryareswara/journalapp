@@ -178,6 +178,8 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             showCreateFolderDialog()
         }
 
+        setupFragmentLifecycleListener()
+
         setStatusBarIconColor()
 
         // Load user data (profile, user name)
@@ -193,6 +195,18 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             .replace(R.id.fragment_container, eachFolderFragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    // refresh tag and folder
+    private fun setupFragmentLifecycleListener() {
+        supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
+            when (fragment) {
+                is HomeFragment, is SettingFragment, is EachFolderFragment -> {
+                    loadTagsIntoChipGroup()
+                    fetchFolders()
+                }
+            }
+        }
     }
 
     /**

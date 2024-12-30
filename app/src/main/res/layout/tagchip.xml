@@ -6,8 +6,9 @@
     android:text="Tag"
     android:checkable="true"
     android:clickable="true"
+    android:textAppearance="@style/TextChip"
+    style="@style/ChipStyle"
+    app:checkedIconVisible="false"
     app:chipIconVisible="false"
     app:chipCornerRadius="4dp"
-    app:closeIconEnabled="false"
-    app:chipBackgroundColor="@color/primary_button"
-    android:textColor="@color/secondary_font" />
+    app:closeIconEnabled="false" />
