@@ -10,15 +10,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
 import com.map.journalapp.write.JournalDetailFragment
 import com.map.journalapp.write.ViewNoteFragment
-import java.sql.Date
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class HomeFragment : Fragment() {
@@ -26,9 +25,6 @@ class HomeFragment : Fragment() {
     private lateinit var journalAdapter: JournalAdapter
     private val journalEntries = mutableListOf<JournalEntry>()
     private val firestore = FirebaseFirestore.getInstance()
-    private var lastDocumentSnapshot: DocumentSnapshot? = null
-    private var isLoading = false
-    private var isLastPage = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,25 +48,12 @@ class HomeFragment : Fragment() {
                 .commit()
         }
 
-        // Setup infinite scroll
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-
-                if (!isLoading && !isLastPage && lastVisibleItemPosition == journalEntries.size - 1) {
-                    loadJournals() // Load next page of journals
-                }
-            }
-        })
-
         return view
     }
 
     override fun onResume() {
         super.onResume()
-        loadJournals(initialLoad = true)
+        loadJournals()
     }
 
     private fun openViewNoteFragment(journalEntry: JournalEntry) {
@@ -90,30 +73,19 @@ class HomeFragment : Fragment() {
             .commit()
     }
 
-    private fun loadJournals(initialLoad: Boolean = false) {
-        if (isLoading) return
-        isLoading = true
-
+    private fun loadJournals() {
         val user = FirebaseAuth.getInstance().currentUser
         val userId = user?.uid ?: return
 
-        var query = firestore.collection("journals")
+        firestore.collection("journals")
             .whereEqualTo("userId", userId)
             .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(40)
-
-        if (!initialLoad && lastDocumentSnapshot != null) {
-            query = query.startAfter(lastDocumentSnapshot)
-        }
-
-        query.get()
+            .get()
             .addOnSuccessListener { result ->
-                if (initialLoad) {
-                    journalEntries.clear()
-                }
+                journalEntries.clear()
 
                 if (result.isEmpty) {
-                    isLastPage = true
+                    Toast.makeText(requireContext(), "No journals found", Toast.LENGTH_SHORT).show()
                 } else {
                     for (document in result) {
                         val journalId = document.id
@@ -123,8 +95,8 @@ class HomeFragment : Fragment() {
                         val timestamp = document.getLong("created_at") ?: 0L
                         val formattedDate = formatTimestamp(timestamp)
 
-                        // Fetch content for the latest note
-                        fetchJournalContent(journalId) { shortDescription, fullDescription ->
+                        // Fetch the most recent note for the journal
+                        fetchMostRecentNote(journalId) { shortDescription, fullDescription ->
                             fetchTags(tagIds) { tagNames ->
                                 val journalEntry = JournalEntry(
                                     id = journalId,
@@ -140,19 +112,15 @@ class HomeFragment : Fragment() {
                             }
                         }
                     }
-                    lastDocumentSnapshot = result.documents.lastOrNull()
                 }
-
-                isLoading = false
             }
             .addOnFailureListener { e ->
                 e.printStackTrace()
-                isLoading = false
                 Toast.makeText(requireContext(), "Failed to load journals: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 
-    private fun fetchJournalContent(
+    private fun fetchMostRecentNote(
         journalId: String,
         callback: (shortDescription: String, fullDescription: String) -> Unit
     ) {
@@ -168,14 +136,13 @@ class HomeFragment : Fragment() {
                 callback(shortDescription, fullDescription)
             }
             .addOnFailureListener {
-                callback("Click to view", "No Notes Available")
+                callback("No Notes Available", "No Notes Available")
             }
     }
 
     private fun formatTimestamp(timestamp: Long): String {
         val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-        val date = Date(timestamp)
-        return sdf.format(date)
+        return sdf.format(Date(timestamp))
     }
 
     private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
