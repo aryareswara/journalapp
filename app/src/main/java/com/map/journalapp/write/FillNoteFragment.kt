@@ -19,6 +19,7 @@ import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.map.journalapp.MainActivity
 import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentFillNoteBinding
 import com.map.journalapp.mainActivity.HomeFragment
@@ -269,7 +270,11 @@ class FillNoteFragment : Fragment() {
                 .delete()
                 .addOnSuccessListener {
                     Toast.makeText(requireContext(), "Journal deleted successfully", Toast.LENGTH_SHORT).show()
-                    requireActivity().supportFragmentManager.popBackStack()
+//                    requireActivity().supportFragmentManager.popBackStack()
+
+                    val intent = Intent(requireContext(), MainActivity::class.java)
+                    startActivity(intent)
+                    requireActivity().finish()
                 }
                 .addOnFailureListener { exception ->
                     Toast.makeText(requireContext(), "Failed to delete journal: ${exception.message}", Toast.LENGTH_SHORT).show()
