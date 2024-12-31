@@ -1,5 +1,6 @@
 package com.map.journalapp.write
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
+import com.map.journalapp.R
 import com.map.journalapp.adapter_model.Folder
 import com.map.journalapp.adapter_model.JournalAdapter
 import com.map.journalapp.adapter_model.JournalEntry
@@ -44,19 +46,38 @@ class EachFolderFragment : Fragment() {
         // Setup RecyclerView
         binding.recyclerEachFolder.layoutManager = LinearLayoutManager(requireContext())
         journalAdapter = JournalAdapter(journalEntries) { journalEntry ->
-            // Potentially open a detail view or do something else
-            Toast.makeText(requireContext(), "Clicked ${journalEntry.title}", Toast.LENGTH_SHORT).show()
+            openViewNoteFragment(journalEntry) // Open ViewNoteFragment on journal click
         }
         binding.recyclerEachFolder.adapter = journalAdapter
 
         if (!folderId.isNullOrEmpty()) {
-            fetchFolderName(folderId!!) // sets folder name in textView
+            fetchFolderName(folderId!!) // Sets folder name in TextView
             loadJournalsInFolder(folderId!!)
         }
     }
 
     /**
-     * Gets 'fileName' from the 'folders' collection
+     * Opens the ViewNoteFragment with the selected journal details.
+     */
+    private fun openViewNoteFragment(journalEntry: JournalEntry) {
+        val viewNoteFragment = ViewNoteFragment().apply {
+            arguments = Bundle().apply {
+                putString("journalId", journalEntry.id)
+                putString("journalTitle", journalEntry.title)
+                putString("fullDescription", journalEntry.fullDescription)
+                putString("image_url", journalEntry.imageUrl)
+                putStringArrayList("tags", ArrayList(journalEntry.tags))
+            }
+        }
+
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, viewNoteFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    /**
+     * Fetches the 'fileName' from the 'folders' collection.
      */
     private fun fetchFolderName(folderId: String) {
         firestore.collection("folders")
@@ -77,8 +98,9 @@ class EachFolderFragment : Fragment() {
     }
 
     /**
-     * Load all journals that have folder_id == folderId
+     * Loads all journals that have folder_id == folderId.
      */
+    @SuppressLint("NotifyDataSetChanged")
     private fun loadJournalsInFolder(folderId: String) {
         firestore.collection("journals")
             .whereEqualTo("folder_id", folderId)
@@ -97,10 +119,11 @@ class EachFolderFragment : Fragment() {
                     val imageUrl = doc.getString("image_url")
                     val tagIds = doc.get("tags") as? List<String> ?: emptyList()
 
-                    // Now fetch the first note subcollection
+                    // Fetch the first note subcollection
                     firestore.collection("journals")
                         .document(journalId)
                         .collection("notes")
+                        .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
                         .limit(1)
                         .get()
                         .addOnSuccessListener { noteSnap ->
@@ -115,14 +138,14 @@ class EachFolderFragment : Fragment() {
                             val dateStr = android.text.format.DateFormat.getMediumDateFormat(requireContext())
                                 .format(java.util.Date(createdAt))
 
-                            // Possibly convert tagIds -> real tag names if we want:
+                            // Convert tagIds to real tag names
                             fetchTagNames(tagIds) { realTagNames ->
                                 val journalEntry = JournalEntry(
                                     id = journalId,
                                     title = title,
                                     shortDescription = shortDesc,
                                     createdAt = dateStr,
-                                    tags = realTagNames, // set the real list
+                                    tags = realTagNames,
                                     imageUrl = imageUrl,
                                     fullDescription = fullDesc,
                                     folderId = folderId
@@ -138,7 +161,9 @@ class EachFolderFragment : Fragment() {
             }
     }
 
-    // Convert tag IDs -> real tag names
+    /**
+     * Converts tag IDs to real tag names.
+     */
     private fun fetchTagNames(tagIds: List<String>, callback: (List<String>) -> Unit) {
         if (tagIds.isEmpty()) {
             callback(emptyList())
