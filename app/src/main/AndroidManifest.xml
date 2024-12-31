@@ -5,6 +5,7 @@
     <!-- Camera permission for taking photos -->
     <uses-permission android:name="android.permission.CAMERA" /> <!-- Permission to write to external storage (saving images) -->
     <uses-permission android:name="android.permission.MediaStore.createWriteRequest" /> <!-- Permission to read from external storage (read files, like selecting images from gallery) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Location permissions for accessing GPS -->
@@ -22,9 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Journalapp"
         tools:targetApi="31">
-        <activity
-            android:name=".mainActivity.CameraActivity"
-            android:exported="false" />
+
 
         <provider
             android:name="androidx.core.content.FileProvider"
