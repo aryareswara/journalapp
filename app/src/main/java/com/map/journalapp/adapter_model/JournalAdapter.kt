@@ -58,10 +58,9 @@ class JournalAdapter(
         // Bind tags to ChipGroup
         holder.tagChipGroup.removeAllViews()
         journalEntry.tags?.forEach { tag ->
-            val chip = Chip(holder.itemView.context).apply {
-                text = tag.toString()
-                isClickable = false
-            }
+            val chip = LayoutInflater.from(holder.itemView.context)
+                .inflate(R.layout.tagchip_static, holder.tagChipGroup, false) as Chip
+            chip.text = tag.toString()
             holder.tagChipGroup.addView(chip)
         }
     }

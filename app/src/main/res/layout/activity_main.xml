@@ -143,6 +143,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginTop="0dp"
                     android:clipToPadding="false"
+                    android:clipChildren="false"
                     android:paddingTop="8dp"/>
 
             </com.google.android.material.navigation.NavigationView>

@@ -77,10 +77,12 @@ class ViewNoteFragment : Fragment() {
 
     private fun displayTags() {
         if (tags != null && tags!!.isNotEmpty()) {
+            binding.tagContainer.removeAllViews() // Clear existing tags to avoid duplication
             for (tagName in tags!!) {
-                val chip = Chip(requireContext())
+                // Inflate the custom tag chip layout
+                val chip = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.tagchip_static, binding.tagContainer, false) as Chip
                 chip.text = tagName
-                chip.isClickable = false
                 binding.tagContainer.addView(chip)
             }
         }

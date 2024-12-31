@@ -169,7 +169,8 @@ class FillNoteFragment : Fragment() {
                     .addOnSuccessListener { document ->
                         val tagName = document.getString("tagName")
                         if (!tagName.isNullOrEmpty()) {
-                            val chip = Chip(requireContext())
+                            val chip = LayoutInflater.from(requireContext())
+                                .inflate(R.layout.tagchip_static, binding.tagContainer, false) as Chip
                             chip.text = tagName
                             chip.isClickable = false
                             binding.tagContainer.addView(chip)

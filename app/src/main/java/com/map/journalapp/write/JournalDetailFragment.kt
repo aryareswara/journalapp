@@ -257,18 +257,16 @@ class JournalDetailFragment : Fragment() {
                     val tagId = document.id
                     val tagName = document.getString("tagName") ?: continue
 
-                    val chip = Chip(requireContext()).apply {
-                        text = tagName
-                        isCheckable = true
-                        isChecked = false  // Initially unchecked
-                        setOnCheckedChangeListener { _, isChecked ->
-                            if (isChecked) {
-                                selectedTagIds.add(tagId)
-                                Log.d("TAG_SELECTION", "Tag added: $tagId")
-                            } else {
-                                selectedTagIds.remove(tagId)
-                                Log.d("TAG_SELECTION", "Tag removed: $tagId")
-                            }
+                    val chip = LayoutInflater.from(requireContext()).inflate(R.layout.tagchip, binding.tagChipGroup, false) as Chip
+                    chip.text = tagName
+                    chip.isChecked = false // Initially unchecked
+                    chip.setOnCheckedChangeListener { _, isChecked ->
+                        if (isChecked) {
+                            selectedTagIds.add(tagId)
+                            Log.d("TAG_SELECTION", "Tag added: $tagId")
+                        } else {
+                            selectedTagIds.remove(tagId)
+                            Log.d("TAG_SELECTION", "Tag removed: $tagId")
                         }
                     }
                     binding.tagChipGroup.addView(chip)
@@ -302,18 +300,16 @@ class JournalDetailFragment : Fragment() {
                 selectedTagIds.add(tagId)
                 Log.d("TAG_SAVING", "Tag saved with ID: $tagId")
 
-                val chip = Chip(requireContext()).apply {
-                    text = newTag
-                    isCheckable = true
-                    isChecked = true  // Automatically select the new tag
-                    setOnCheckedChangeListener { _, isChecked ->
-                        if (isChecked) {
-                            selectedTagIds.add(tagId)
-                            Log.d("TAG_SELECTION", "Tag added: $tagId")
-                        } else {
-                            selectedTagIds.remove(tagId)
-                            Log.d("TAG_SELECTION", "Tag removed: $tagId")
-                        }
+                val chip = LayoutInflater.from(requireContext()).inflate(R.layout.tagchip, binding.tagChipGroup, false) as Chip
+                chip.text = newTag
+                chip.isChecked = true // Automatically select the new tag
+                chip.setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        selectedTagIds.add(tagId)
+                        Log.d("TAG_SELECTION", "Tag added: $tagId")
+                    } else {
+                        selectedTagIds.remove(tagId)
+                        Log.d("TAG_SELECTION", "Tag removed: $tagId")
                     }
                 }
                 binding.tagChipGroup.addView(chip)

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -132,9 +133,6 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
         // Folder RecyclerView
         folderRecyclerView = navigationViewBottom.findViewById(R.id.folderRecycle)
         folderRecyclerView.layoutManager = LinearLayoutManager(this)
-        folderRecyclerView.addItemDecoration(
-            DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
-        )
 
         // FolderAdapter: single-click => open EachFolderFragment
         folderAdapter = FolderAdapter(emptyList()) { folder ->
@@ -157,6 +155,31 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                 .commit()
             drawerLayout.closeDrawer(GravityCompat.START)
         }
+
+        folderRecyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+
+            private var isClick = false  // Flag to track if it's a click (not drag)
+
+            override fun onInterceptTouchEvent(recyclerView: RecyclerView, e: MotionEvent): Boolean {
+                // Check the initial touch down event
+                if (e.action == MotionEvent.ACTION_DOWN) {
+                    // Start tracking touch
+                    isClick = true
+                }
+
+                // Check the touch up event
+                if (e.action == MotionEvent.ACTION_UP) {
+                    if (isClick) {
+                        // Close the drawer when an item is clicked (not dragged)
+                        drawerLayout.closeDrawer(GravityCompat.START)
+                    }
+                    // Reset the click flag
+                    isClick = false
+                }
+
+                return super.onInterceptTouchEvent(recyclerView, e)
+            }
+        })
 
 
         // If no saved instance, load HomeFragment
