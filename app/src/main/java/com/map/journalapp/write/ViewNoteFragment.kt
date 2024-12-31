@@ -39,6 +39,7 @@ class ViewNoteFragment : Fragment() {
         binding.journalTitleDisplay.text = journalTitle
 
         fetchLatestNote()
+        fetchLocationAndImage()
 
         imageUrl?.let {
             if (it.isNotEmpty()) {
@@ -85,6 +86,34 @@ class ViewNoteFragment : Fragment() {
             }
             .addOnFailureListener { e ->
                 Toast.makeText(requireContext(), "Failed to fetch note: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun fetchLocationAndImage() {
+        if (journalId.isNullOrEmpty()) {
+            Toast.makeText(requireContext(), "Invalid journal ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        firestore.collection("journals")
+            .document(journalId!!)
+            .get()
+            .addOnSuccessListener { document ->
+                val location = document.getString("location") ?: "Location not available"
+                val locationImageUrl = document.getString("location_image_url")
+
+                binding.locationDisplay.text = location
+
+                locationImageUrl?.let {
+                    binding.locationImageView.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(it)
+                        .centerInside()
+                        .into(binding.locationImageView)
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to fetch location: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
