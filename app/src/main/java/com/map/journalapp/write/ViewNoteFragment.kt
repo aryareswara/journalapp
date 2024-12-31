@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
+import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.databinding.FragmentViewNoteBinding
 
@@ -16,9 +18,10 @@ class ViewNoteFragment : Fragment() {
 
     private var journalId: String? = null
     private var journalTitle: String? = null
-    private var fullDescription: String? = null
     private var imageUrl: String? = null
     private var tags: ArrayList<String>? = null
+
+    private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentViewNoteBinding.inflate(inflater, container, false)
@@ -30,12 +33,12 @@ class ViewNoteFragment : Fragment() {
 
         journalId = arguments?.getString("journalId")
         journalTitle = arguments?.getString("journalTitle")
-        fullDescription = arguments?.getString("fullDescription")
         imageUrl = arguments?.getString("image_url")
         tags = arguments?.getStringArrayList("tags")
 
         binding.journalTitleDisplay.text = journalTitle
-        binding.journalContentDisplay.text = fullDescription ?: "No Notes Available"
+
+        fetchLatestNote()
 
         imageUrl?.let {
             if (it.isNotEmpty()) {
@@ -51,7 +54,7 @@ class ViewNoteFragment : Fragment() {
                 arguments = Bundle().apply {
                     putString("journalId", journalId)
                     putString("journalTitle", journalTitle)
-                    putString("noteContent", fullDescription)
+                    putString("noteContent", binding.journalContentDisplay.text.toString())
                     putString("image_url", imageUrl)
                     putStringArrayList("journalTags", tags)
                 }
@@ -63,9 +66,29 @@ class ViewNoteFragment : Fragment() {
         }
     }
 
+    private fun fetchLatestNote() {
+        if (journalId.isNullOrEmpty()) {
+            Toast.makeText(requireContext(), "Invalid journal ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        firestore.collection("journals")
+            .document(journalId!!)
+            .collection("notes")
+            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { result ->
+                val latestNote = result.documents.firstOrNull()
+                val fullDescription = latestNote?.getString("content") ?: "No Notes Available"
+                binding.journalContentDisplay.text = fullDescription
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to fetch note: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     private fun displaySelectedImage(image: Any) {
-        // Ensure ImageView in XML has: android:adjustViewBounds="true"
-        // and no scaleType or scaleType="fitCenter" for better control
         binding.chosenImageView.adjustViewBounds = true
         Glide.with(this)
             .load(image)
@@ -79,7 +102,6 @@ class ViewNoteFragment : Fragment() {
         if (tags != null && tags!!.isNotEmpty()) {
             binding.tagContainer.removeAllViews() // Clear existing tags to avoid duplication
             for (tagName in tags!!) {
-                // Inflate the custom tag chip layout
                 val chip = LayoutInflater.from(requireContext())
                     .inflate(R.layout.tagchip_static, binding.tagContainer, false) as Chip
                 chip.text = tagName

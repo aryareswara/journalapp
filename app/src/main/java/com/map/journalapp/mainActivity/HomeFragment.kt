@@ -100,7 +100,7 @@ class HomeFragment : Fragment() {
         var query = firestore.collection("journals")
             .whereEqualTo("userId", userId)
             .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(40) // Limit to 40 per page for pagination
+            .limit(40)
 
         if (!initialLoad && lastDocumentSnapshot != null) {
             query = query.startAfter(lastDocumentSnapshot)
@@ -123,7 +123,7 @@ class HomeFragment : Fragment() {
                         val timestamp = document.getLong("created_at") ?: 0L
                         val formattedDate = formatTimestamp(timestamp)
 
-                        // Fetch content for shortDescription and fullDescription
+                        // Fetch content for the latest note
                         fetchJournalContent(journalId) { shortDescription, fullDescription ->
                             fetchTags(tagIds) { tagNames ->
                                 val journalEntry = JournalEntry(
@@ -159,6 +159,7 @@ class HomeFragment : Fragment() {
         firestore.collection("journals")
             .document(journalId)
             .collection("notes")
+            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .limit(1)
             .get()
             .addOnSuccessListener { result ->
