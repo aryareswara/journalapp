@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.map.journalapp.R
 import com.map.journalapp.adapter_model.JournalAdapter
@@ -26,6 +26,9 @@ class HomeFragment : Fragment() {
     private lateinit var journalAdapter: JournalAdapter
     private val journalEntries = mutableListOf<JournalEntry>()
     private val firestore = FirebaseFirestore.getInstance()
+    private var lastDocumentSnapshot: DocumentSnapshot? = null
+    private var isLoading = false
+    private var isLastPage = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,12 +52,25 @@ class HomeFragment : Fragment() {
                 .commit()
         }
 
+        // Setup infinite scroll
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+
+                if (!isLoading && !isLastPage && lastVisibleItemPosition == journalEntries.size - 1) {
+                    loadJournals() // Load next page of journals
+                }
+            }
+        })
+
         return view
     }
 
     override fun onResume() {
         super.onResume()
-        loadJournals()
+        loadJournals(initialLoad = true)
     }
 
     private fun openViewNoteFragment(journalEntry: JournalEntry) {
@@ -64,7 +80,6 @@ class HomeFragment : Fragment() {
                 putString("journalTitle", journalEntry.title)
                 putString("fullDescription", journalEntry.fullDescription)
                 putString("image_url", journalEntry.imageUrl)
-                // Pass the tag list as an ArrayList
                 putStringArrayList("tags", ArrayList(journalEntry.tags))
             }
         }
@@ -75,50 +90,48 @@ class HomeFragment : Fragment() {
             .commit()
     }
 
-    private fun loadJournals() {
+    private fun loadJournals(initialLoad: Boolean = false) {
+        if (isLoading) return
+        isLoading = true
+
         val user = FirebaseAuth.getInstance().currentUser
         val userId = user?.uid ?: return
 
-        // Suppose in Firestore your user field is "userId" and your timestamp is "created_at"
-        firestore.collection("journals")
+        var query = firestore.collection("journals")
             .whereEqualTo("userId", userId)
             .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .get()
+            .limit(40) // Limit to 40 per page for pagination
+
+        if (!initialLoad && lastDocumentSnapshot != null) {
+            query = query.startAfter(lastDocumentSnapshot)
+        }
+
+        query.get()
             .addOnSuccessListener { result ->
-                journalEntries.clear()
+                if (initialLoad) {
+                    journalEntries.clear()
+                }
 
-                for (document in result) {
-                    val journalId = document.id
-                    val title = document.getString("title") ?: "No Title"
-                    val imageUrl = document.getString("image_url")
-                    // Our array of tag IDs from Firestore
-                    val tagIds = document.get("tags") as? List<String> ?: emptyList()
+                if (result.isEmpty) {
+                    isLastPage = true
+                } else {
+                    for (document in result) {
+                        val journalId = document.id
+                        val title = document.getString("title") ?: "No Title"
+                        val imageUrl = document.getString("image_url")
+                        val tagIds = document.get("tags") as? List<String> ?: emptyList()
+                        val timestamp = document.getLong("created_at") ?: 0L
+                        val formattedDate = formatTimestamp(timestamp)
 
-                    firestore.collection("journals")
-                        .document(journalId)
-                        .collection("notes")
-                        .limit(1)
-                        .get()
-                        .addOnSuccessListener { noteResult ->
-                            var description = "No Notes Available"
-                            var fullDescription = description
-
-                            if (noteResult.documents.isNotEmpty()) {
-                                fullDescription = noteResult.documents[0].getString("content") ?: "No Notes Available"
-                                description = getFirst20Words(fullDescription)
-                            }
-
-                            val timestamp = document.getLong("created_at") ?: 0L
-                            val formattedDate = formatTimestamp(timestamp)
-
-                            // Convert the tagIds into actual tag strings from "tags" collection
+                        // Fetch content for shortDescription and fullDescription
+                        fetchJournalContent(journalId) { shortDescription, fullDescription ->
                             fetchTags(tagIds) { tagNames ->
                                 val journalEntry = JournalEntry(
                                     id = journalId,
                                     title = title,
-                                    shortDescription = description,
+                                    shortDescription = shortDescription,
                                     createdAt = formattedDate,
-                                    tags = tagNames,  // <-- pass as real list
+                                    tags = tagNames,
                                     imageUrl = imageUrl,
                                     fullDescription = fullDescription
                                 )
@@ -126,11 +139,35 @@ class HomeFragment : Fragment() {
                                 journalAdapter.notifyDataSetChanged()
                             }
                         }
+                    }
+                    lastDocumentSnapshot = result.documents.lastOrNull()
                 }
+
+                isLoading = false
             }
             .addOnFailureListener { e ->
                 e.printStackTrace()
+                isLoading = false
                 Toast.makeText(requireContext(), "Failed to load journals: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun fetchJournalContent(
+        journalId: String,
+        callback: (shortDescription: String, fullDescription: String) -> Unit
+    ) {
+        firestore.collection("journals")
+            .document(journalId)
+            .collection("notes")
+            .limit(1)
+            .get()
+            .addOnSuccessListener { result ->
+                val fullDescription = result.documents.firstOrNull()?.getString("content") ?: "No Notes Available"
+                val shortDescription = getFirst20Words(fullDescription)
+                callback(shortDescription, fullDescription)
+            }
+            .addOnFailureListener {
+                callback("Click to view", "No Notes Available")
             }
     }
 
@@ -140,9 +177,6 @@ class HomeFragment : Fragment() {
         return sdf.format(date)
     }
 
-    /**
-     * Convert the list of tag document IDs -> list of tagName strings
-     */
     private fun fetchTags(tagIds: List<String>, callback: (List<String>) -> Unit) {
         if (tagIds.isEmpty()) {
             callback(emptyList())
@@ -150,19 +184,15 @@ class HomeFragment : Fragment() {
         }
 
         firestore.collection("tags")
-            .whereIn(FieldPath.documentId(), tagIds)
+            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), tagIds)
             .get()
             .addOnSuccessListener { result ->
-                val tags = mutableListOf<String>()
-                for (document in result) {
-                    val tagName = document.getString("tagName") ?: "Unknown"
-                    tags.add(tagName)
-                }
+                val tags = result.documents.mapNotNull { it.getString("tagName") }
                 callback(tags)
             }
             .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
                 callback(emptyList())
+                Toast.makeText(requireContext(), "Failed to load tags", Toast.LENGTH_SHORT).show()
             }
     }
 

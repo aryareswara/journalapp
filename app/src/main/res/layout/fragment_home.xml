@@ -7,31 +7,16 @@
     android:layout_height="match_parent"
     tools:context=".mainActivity.HomeFragment">
 
-    <!-- Scrollable content -->
-    <ScrollView
-        android:id="@+id/scrollView"
+    <!-- Journal Card RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/journalRecycle"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:scrollbars="none"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Journal Card RecyclerView -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/journalRecycle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false" />
-
-        </LinearLayout>
-
-    </ScrollView>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/newJournalButton"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        android:scrollbars="vertical" />
 
     <!-- Add New Journal Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton

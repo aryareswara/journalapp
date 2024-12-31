@@ -46,7 +46,7 @@ class JournalAdapter(
         // Bind data...
         holder.journalTitle.text = journalEntry.title
         holder.journalDescription.text = journalEntry.shortDescription
-        holder.journalDate.text = journalEntry.createdAt.toString()
+        holder.journalDate.text = journalEntry.createdAt
         if (journalEntry.imageUrl.isNullOrEmpty()) {
             holder.journalImage.visibility = View.GONE
         } else {

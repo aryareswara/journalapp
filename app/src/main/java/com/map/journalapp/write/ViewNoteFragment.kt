@@ -35,7 +35,7 @@ class ViewNoteFragment : Fragment() {
         tags = arguments?.getStringArrayList("tags")
 
         binding.journalTitleDisplay.text = journalTitle
-        binding.journalContentDisplay.text = fullDescription
+        binding.journalContentDisplay.text = fullDescription ?: "No Notes Available"
 
         imageUrl?.let {
             if (it.isNotEmpty()) {
