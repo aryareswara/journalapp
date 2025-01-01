@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -45,12 +44,11 @@ import com.map.journalapp.mainActivity.SettingFragment
 import com.map.journalapp.mainActivity.SettingFragment.OnProfileImageUpdatedListener
 import com.map.journalapp.write.EachFolderFragment
 import java.security.MessageDigest
-import com.map.journalapp.adapter_model.Folder as FolderModel
 
 /**
  * The main activity of the application, handling navigation and user interactions.
  */
-class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Implement the interface
+class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener {
 
     // 1) Firebase Auth
     private lateinit var auth: FirebaseAuth
@@ -72,7 +70,7 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
     // 6) Folder stuff
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var folderRecyclerView: RecyclerView
-    private var folderList: MutableList<FolderModel> = mutableListOf()
+    private var folderList: MutableList<Folder> = mutableListOf()
 
     // 7) View Binding
     private lateinit var binding: ActivityMainBinding
@@ -95,7 +93,6 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             finish()
             return
         }
-
 
         // Toolbar
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -134,9 +131,9 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
         folderRecyclerView = navigationViewBottom.findViewById(R.id.folderRecycle)
         folderRecyclerView.layoutManager = LinearLayoutManager(this)
 
-        // FolderAdapter: single-click => open EachFolderFragment
+        // FolderAdapter: single-click => open EachFolderFragment (with password check if needed)
         folderAdapter = FolderAdapter(emptyList()) { folder ->
-            openFolderFragment(folder.id)
+            checkFolderPasswordBeforeOpening(folder)
         }
         folderRecyclerView.adapter = folderAdapter
 
@@ -181,7 +178,6 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             }
         })
 
-
         // If no saved instance, load HomeFragment
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
@@ -210,7 +206,60 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
     }
 
     /**
-     * Opens EachFolderFragment by folderId
+     * Helper that checks if a folder is password-protected. If it is, prompt for password.
+     * If correct or not protected, open the folder.
+     */
+    private fun checkFolderPasswordBeforeOpening(folder: Folder) {
+        if (folder.isPasswordProtected && !folder.password.isNullOrEmpty()) {
+            // Prompt for password
+            showPasswordPrompt(folder) {
+                // If password matched, proceed
+                openFolderFragment(folder.id)
+            }
+        } else {
+            // No password needed
+            openFolderFragment(folder.id)
+        }
+    }
+
+    /**
+     * Show an AlertDialog to prompt the user for the folder password.
+     * If the hashed input matches the stored hash, call onSuccess().
+     */
+    private fun showPasswordPrompt(folder: Folder, onSuccess: () -> Unit) {
+        val builder = AlertDialog.Builder(this, R.style.AlertDialog)
+        builder.setTitle("Enter Password")
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_password_prompt, null)
+        builder.setView(dialogView)
+
+        val passwordInput = dialogView.findViewById<EditText>(R.id.editTextPasswordInput)
+
+        builder.setPositiveButton("OK") { _, _ ->
+            val inputPassword = passwordInput.text.toString().trim()
+            val hashedInput = hashPassword(inputPassword)
+            if (hashedInput == folder.password) {
+                onSuccess()
+            } else {
+                Toast.makeText(this, "Invalid password", Toast.LENGTH_SHORT).show()
+            }
+        }
+        builder.setNegativeButton("Cancel", null)
+
+        val dialog = builder.create()
+        dialog.show()
+
+        // Style the dialog buttons if needed
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(
+            ContextCompat.getColor(this, R.color.primary_font)
+        )
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(
+            ContextCompat.getColor(this, R.color.primary_font)
+        )
+    }
+
+    /**
+     * Opens EachFolderFragment by folderId (after checking password if needed).
      */
     private fun openFolderFragment(folderId: String) {
         val eachFolderFragment = EachFolderFragment.newInstance(folderId)
@@ -250,20 +299,19 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             .addOnSuccessListener { result ->
                 folderList.clear()
                 if (result.isEmpty) {
-                    // No folders => update adapter with empty list
                     folderAdapter.updateFolders(folderList)
                     Log.d("FOLDER_LOADING", "No folders found for user.")
                     return@addOnSuccessListener
                 }
                 for (doc in result) {
                     val folderId = doc.id
-                    val fileName = doc.getString("file_name")?.takeIf { it.isNotBlank() } ?: "Untitled Folder"
+                    val fileName = doc.getString("file_name")?.takeIf { it.isNotBlank() }
+                        ?: "Untitled Folder"
                     val createdAt = doc.getTimestamp("created_at") ?: Timestamp.now()
                     val userIdDoc = doc.getString("user_id") ?: userId
                     val isPasswordProtected = doc.getBoolean("isPasswordProtected") ?: false
-                    val password = doc.getString("password")
+                    val password = doc.getString("password") // hashed password in Firestore
 
-                    // Construct folder model manually
                     val folder = Folder(
                         id = folderId,
                         fileName = fileName,
@@ -281,14 +329,14 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                 }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to load folders: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to load folders: ${e.message}", Toast.LENGTH_SHORT)
+                    .show()
                 Log.e("FOLDER_LOADING", "Failed to load folders: ${e.message}")
             }
     }
 
-
     /**
-     * Dialog to create a new folder
+     * Dialog to create a new folder (with optional password).
      */
     private fun showCreateFolderDialog() {
         val builder = AlertDialog.Builder(this, R.style.AlertDialog)
@@ -308,24 +356,18 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             passwordEditText.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
-        // Add buttons to the dialog
-        builder.setPositiveButton("Create", null) // Null so we can customize later
+        builder.setPositiveButton("Create", null)
         builder.setNegativeButton("Cancel", null)
 
         val alertDialog = builder.create()
 
         alertDialog.setOnShowListener {
-            // Access dialog buttons after it's shown
             val positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val negativeButton = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
-            // Style the positive button
             positiveButton.setTextColor(ContextCompat.getColor(this, R.color.primary_font))
-
-            // Style the negative button
             negativeButton.setTextColor(ContextCompat.getColor(this, R.color.primary_font))
 
-            // Handle positive button click
             positiveButton.setOnClickListener {
                 val folderName = folderNameEditText.text.toString().trim()
                 val isPasswordProtected = passwordToggle.isChecked
@@ -342,14 +384,12 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                         passwordEditText.requestFocus()
                     }
                     else -> {
-                        // Create the folder and dismiss the dialog
                         createFolder(folderName, isPasswordProtected, password)
                         alertDialog.dismiss()
                     }
                 }
             }
 
-            // Handle negative button click
             negativeButton.setOnClickListener {
                 alertDialog.dismiss()
             }
@@ -358,10 +398,8 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
         alertDialog.show()
     }
 
-
-
     /**
-     * Actually create the folder doc in Firestore
+     * Actually create the folder doc in Firestore (with optional hashed password).
      */
     private fun createFolder(folderName: String, isPasswordProtected: Boolean, password: String?) {
         val userId = auth.currentUser?.uid ?: return
@@ -370,9 +408,9 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
         val folderData = hashMapOf(
             "file_name" to folderName,
             "created_at" to Timestamp.now(),
-            "user_id" to userId,  // must match what's in Firestore (not "userId")
+            "user_id" to userId,
             "isPasswordProtected" to isPasswordProtected,
-            "password" to hashedPassword
+            "password" to hashedPassword  // store hashed password
         )
 
         firestore.collection("folders")
@@ -382,7 +420,8 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                 fetchFolders()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to create folder: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to create folder: ${e.message}", Toast.LENGTH_SHORT)
+                    .show()
             }
     }
 
@@ -395,17 +434,15 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val profilePictureUrl = document.getString("profilePicture")
-                    if (!profilePictureUrl.isNullOrEmpty()) {
-                        if (!isFinishing) { // Valid check for Activity
-                            Glide.with(this)
-                                .load(profilePictureUrl)
-                                .diskCacheStrategy(DiskCacheStrategy.NONE) // Bypass disk cache
-                                .skipMemoryCache(true) // Bypass memory cache
-                                .circleCrop()
-                                .placeholder(R.drawable.person)
-                                .error(R.drawable.person)
-                                .into(profileIcon)
-                        }
+                    if (!profilePictureUrl.isNullOrEmpty() && !isFinishing) {
+                        Glide.with(this)
+                            .load(profilePictureUrl)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE) // Bypass disk cache
+                            .skipMemoryCache(true) // Bypass memory cache
+                            .circleCrop()
+                            .placeholder(R.drawable.person)
+                            .error(R.drawable.person)
+                            .into(profileIcon)
                     }
                     val userName = document.getString("name") ?: "User"
 
@@ -415,7 +452,8 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                 }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to load user data: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to load user data: ${e.message}", Toast.LENGTH_SHORT)
+                    .show()
             }
     }
 
@@ -424,7 +462,7 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
      * Refreshes the user data by reloading it from Firestore.
      */
     override fun onProfileImageUpdated() {
-        loadUserData() // Refresh the user data to display the updated profile image
+        loadUserData()
     }
 
     /**
@@ -471,10 +509,10 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
                 }
             }
             .addOnFailureListener { exception ->
-                Toast.makeText(this, "Failed to load tags: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to load tags: ${exception.message}", Toast.LENGTH_SHORT)
+                    .show()
             }
     }
-
 
     /**
      * Called when a tag chip is selected
@@ -498,18 +536,13 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
      * Set the status bar icon color to @color/primary_font based on theme.
      */
     private fun setStatusBarIconColor() {
-        // Use the WindowInsetsControllerCompat to control the appearance of status bar icons.
         val controller = WindowInsetsControllerCompat(window, window.decorView)
-
-        // Check if the current theme is dark or light, and set icon color accordingly.
         controller.isAppearanceLightStatusBars = !isDarkTheme()
 
-        // If you need to set the status bar icons to a custom color, you can use a combination of systemUiVisibility
-        // and ensure that the text or icons use the primary font color for light or dark themes.
         if (isDarkTheme()) {
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
         } else {
-            window.decorView.systemUiVisibility = 0 // Reset to default if necessary
+            window.decorView.systemUiVisibility = 0
         }
     }
 
@@ -517,9 +550,9 @@ class MainActivity : AppCompatActivity(), OnProfileImageUpdatedListener { // Imp
      * Check if the current theme is dark.
      */
     private fun isDarkTheme(): Boolean {
-        return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
     }
-
 
     /**
      * Hash a password with SHA-256
