@@ -94,21 +94,24 @@ class HomeFragment : Fragment() {
                         val tagIds = document.get("tags") as? List<String> ?: emptyList()
                         val timestamp = document.getLong("created_at") ?: 0L
                         val formattedDate = formatTimestamp(timestamp)
+                        val folder = document.getString("folder_id")
 
-                        // Fetch the most recent note for the journal
-                        fetchMostRecentNote(journalId) { shortDescription, fullDescription ->
-                            fetchTags(tagIds) { tagNames ->
-                                val journalEntry = JournalEntry(
-                                    id = journalId,
-                                    title = title,
-                                    shortDescription = shortDescription,
-                                    createdAt = formattedDate,
-                                    tags = tagNames,
-                                    imageUrl = imageUrl,
-                                    fullDescription = fullDescription
-                                )
-                                journalEntries.add(journalEntry)
-                                journalAdapter.notifyDataSetChanged()
+                        if (folder == null) {
+                            // Fetch the most recent note for the journal
+                            fetchMostRecentNote(journalId) { shortDescription, fullDescription ->
+                                fetchTags(tagIds) { tagNames ->
+                                    val journalEntry = JournalEntry(
+                                        id = journalId,
+                                        title = title,
+                                        shortDescription = shortDescription,
+                                        createdAt = formattedDate,
+                                        tags = tagNames,
+                                        imageUrl = imageUrl,
+                                        fullDescription = fullDescription
+                                    )
+                                    journalEntries.add(journalEntry)
+                                    journalAdapter.notifyDataSetChanged()
+                                }
                             }
                         }
                     }
