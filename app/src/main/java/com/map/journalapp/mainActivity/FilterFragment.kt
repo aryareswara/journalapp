@@ -87,40 +87,44 @@ class FilterFragment : Fragment() {
                                 val title = document.getString("title") ?: "No Title"
                                 val imageUrl = document.getString("image_url")
                                 val tagIds = document.get("tags") as? List<String> ?: emptyList()
+                                val folder = document.getString("folder_id")
 
-                                firestore.collection("journals")
-                                    .document(journalId)
-                                    .collection("notes")
-                                    .limit(1)
-                                    .get()
-                                    .addOnSuccessListener { noteResult ->
-                                        var description = "No Notes Available"
-                                        var fullDescription = description
+                                if (folder == null) {
+                                    firestore.collection("journals")
+                                        .document(journalId)
+                                        .collection("notes")
+                                        .limit(1)
+                                        .get()
+                                        .addOnSuccessListener { noteResult ->
+                                            var description = "No Notes Available"
+                                            var fullDescription = description
 
-                                        if (noteResult.documents.isNotEmpty()) {
-                                            fullDescription = noteResult.documents[0]
-                                                .getString("content") ?: "No Notes Available"
-                                            description = getFirst20Words(fullDescription)
+                                            if (noteResult.documents.isNotEmpty()) {
+                                                fullDescription = noteResult.documents[0]
+                                                    .getString("content") ?: "No Notes Available"
+                                                description = getFirst20Words(fullDescription)
+                                            }
+
+                                            val timestamp = document.getLong("created_at") ?: 0L
+                                            val formattedDate = formatTimestamp(timestamp)
+
+                                            // Convert the tagIds (doc-level) -> list of real tag names
+                                            fetchTags(tagIds) { realTagNames ->
+                                                val journalEntry = JournalEntry(
+                                                    id = journalId,
+                                                    title = title,
+                                                    shortDescription = description,
+                                                    createdAt = formattedDate,
+                                                    tags = realTagNames,   // store list
+                                                    imageUrl = imageUrl,
+                                                    fullDescription = fullDescription
+                                                )
+                                                journalEntries.add(journalEntry)
+                                                journalAdapter.notifyDataSetChanged()
+                                            }
                                         }
+                                }
 
-                                        val timestamp = document.getLong("created_at") ?: 0L
-                                        val formattedDate = formatTimestamp(timestamp)
-
-                                        // Convert the tagIds (doc-level) -> list of real tag names
-                                        fetchTags(tagIds) { realTagNames ->
-                                            val journalEntry = JournalEntry(
-                                                id = journalId,
-                                                title = title,
-                                                shortDescription = description,
-                                                createdAt = formattedDate,
-                                                tags = realTagNames,   // store list
-                                                imageUrl = imageUrl,
-                                                fullDescription = fullDescription
-                                            )
-                                            journalEntries.add(journalEntry)
-                                            journalAdapter.notifyDataSetChanged()
-                                        }
-                                    }
                             }
                         }
                         .addOnFailureListener { exception ->
